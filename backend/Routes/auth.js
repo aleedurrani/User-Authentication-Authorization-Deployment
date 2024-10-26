@@ -6,7 +6,7 @@ const {RegisterUser, LoginUser} = require('../Controller/authController')
  router.post('/register', RegisterUser);
  router.post('/login', LoginUser);
  //router.post('/getProfile', verifyToken, GetUserProfile);
- 
+ //abc
 
 
 
