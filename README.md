@@ -1,6 +1,6 @@
 # User-Authentication-Authorization-Deployment
 
-This project implements user authentication and authorization, and includes deployment instructions.
+This project implements user authentication and authorization.
 
 ## Getting Started
 
