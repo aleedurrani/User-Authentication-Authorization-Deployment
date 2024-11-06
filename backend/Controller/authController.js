@@ -1,6 +1,9 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require('../Models/User')
+const Request = require('../Models/Request')
+const nodemailer = require("nodemailer");
+const crypto = require("crypto");
 
 const generateToken = (user) => {
   const payload = {
@@ -13,41 +16,127 @@ const generateToken = (user) => {
   });
 };
 
+
 let RegisterUser = async (req, res) => {
   try {
+    // Check if the user already exists
+    const existingUser = await User.findOne({ email: req.body.Email });
 
-    const existingUser = await User.findOne({ Email: req.body.Email });
     
+
     if (existingUser) {
-      return res.status(400).json({ message: "You already have an account. Please Login" });
+      return res.status(400).json({ message: "You already have an account. Please login." });
+    } 
+
+    const existingRequest = await Request.findOne({ 
+      requestType: 'signup', 
+      'requestData.email': req.body.Email, 
+      status: 'pending' 
+    });
+    if (existingRequest) {
+      return res.status(403).json({ message: "A signup request is already pending for this email." });
     }
-    
+
+    if (req.body.Password && req.body.FirstName && req.body.LastName && req.body.Role) {
     const salt = await bcrypt.genSalt(10);
     const hashedPass = await bcrypt.hash(req.body.Password, salt);
-    const newUser = new Student({
-      FirstName: req.body.FirstName,
-      LastName: req.body.LastName,
-      Email: req.body.Email,
-      Password: hashedPass,
-      Age: req.body.Age
+    // Create a new request entry
+    const newRequest = new Request({
+      requestType: 'signup',
+      requestData: {
+        email: req.body.Email,
+        password: hashedPass,
+        name: req.body.FirstName + " " + req.body.LastName,
+        role: req.body.Role,
+      },
+        // Pass the role from the request
+      status: 'pending',  
     });
 
-    const user = await User.create(newUser);
+    // Save the request to the database
+    await newRequest.save();
 
-    const token = generateToken(user);
-    
-    res.status(200).json({
-      token,  // JWT token
-      user: {
-        _id: user._id,       // Return user ID
-        FullName: user.FirstName + " " + user.LastName  // Return full name
-      }
-    });
+ 
+    res.sendStatus(200);
+  } else {
+    return res.status(200).json({ message: "New user" });
+  }
 
   } catch (err) {
-    res.status(500).json(err);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
+
+let RegisterUserGoogle = async (req, res) => {
+  try {
+    const randomPassword = crypto.randomBytes(8).toString('hex'); 
+    const salt = await bcrypt.genSalt(10); 
+    const hashedPass = await bcrypt.hash(randomPassword, salt); 
+    // Create a new request entry
+
+    const newRequest = new Request({
+      requestType: 'signup',
+      requestData: {
+        email: req.body.Email,
+        password: hashedPass,
+        name: req.body.FirstName + " " + req.body.LastName,
+        role: req.body.Role,
+      },
+        // Pass the role from the request
+      status: 'pending',  
+      googleId: req.body.GoogleId
+    });
+
+    // Save the request to the database
+    await newRequest.save();
+
+ 
+    res.sendStatus(200);
+  
+
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+
+let VerifyEmail = async (req, res) => {
+  try {
+    
+    const pin = crypto.randomInt(10000, 99999); // Generate a 6-digit PIN
+   
+    // Set up Nodemailer to send the email
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      auth: {
+        user: process.env.EMAIL,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL,
+      to: req.body.Email,
+      subject: "Email Verification PIN",
+      text: `Your email verification PIN is ${pin}`,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error('Error sending email:', error); // Log the specific error
+        return res.status(401).json({ message: "Error sending email", error: error.message });
+      }
+      res.status(200).json({ message: "PIN sent to your email", pin: pin });
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json("Internal server error");
+  }
+};
+
+
+
 
 
 let LoginUser = async (req, res) => {
@@ -87,4 +176,4 @@ let LoginUser = async (req, res) => {
 };
 
 
-module.exports = { RegisterUser, LoginUser}
+module.exports = { RegisterUser, LoginUser, VerifyEmail, RegisterUserGoogle}
