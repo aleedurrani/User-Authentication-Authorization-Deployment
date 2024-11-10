@@ -55,7 +55,7 @@ const UserProfile = () => {
   
   const handleLogout = () => {
     localStorage.clear();
-    navigate("/");
+    navigate("/login");
   };
 
   return (
@@ -74,7 +74,7 @@ const UserProfile = () => {
               </span>
             </div>
             <div className="flex items-center space-x-6">
-              <button className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors duration-300">
+              <button onClick={() => navigate('/requests')} className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors duration-300">
                 <Inbox className="h-5 w-5 mr-2 text-gray-500" />
                 My Requests
               </button>

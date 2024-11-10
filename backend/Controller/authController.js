@@ -138,7 +138,74 @@ let VerifyEmail = async (req, res) => {
 };
 
 
+let VerifyUserCredentials = async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.body.Email });
 
+    if (!user) {
+      // If user is not found
+      return res.status(400).json("User not found!");
+    }
+
+
+    const pin = crypto.randomInt(10000, 99999); // Generate a 6-digit PIN
+    user.resetPin = pin;
+    user.pinExpires = Date.now() + 300000;  // PIN valid for 1 hour
+    await user.save();
+
+    // Set up Nodemailer to send the email
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      auth: {
+        user: process.env.EMAIL,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL,
+      to: req.body.Email,
+      subject: "Password Reset PIN",
+      text: `Your password reset PIN is ${pin}`,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error('Error sending email:', error); // Log the specific error
+        return res.status(401).json({ message: "Error sending email", error: error.message });
+      }
+      res.status(200).json({ message: "PIN sent to your email" , pin: pin});
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json("Internal server error");
+  }
+};
+
+
+const UpdateUserPassword = async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.body.Email });
+
+    if (!user) {
+      // If user is not found
+      return res.status(400).json("User not found!");
+    }
+
+    // Hash the new password before saving
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(req.body.NewPassword, salt);
+
+    // Update user's password in the database
+    user.passwordHash = hashedPassword;
+    await user.save();
+
+    res.status(200).json("Password updated successfully!");
+  } catch (err) {
+    console.error(err);
+    res.status(500).json("Internal server error");
+  }
+};
 
 
 let LoginUser = async (req, res) => {
@@ -272,4 +339,114 @@ const ProtectedRoute = async (req, res) =>{
 
 
 
-module.exports = { RegisterUser, LoginUser, VerifyEmail, RegisterUserGoogle, LoginGoogle, GetUserProfile, ProtectedRoute}
+
+const GetRequests = async (req, res) => {
+  const userId = res.locals.userId; 
+
+
+  try {
+    const userProfile = await User.findById(userId);
+
+    if (!userProfile) {
+      return res.status(404).json({ message: 'User profile not found' });
+    }
+
+    const requests = await Request.find({
+      requestType: { $ne: 'signup' },
+      'requestData.email': userProfile.email
+    });
+
+    res.status(200).json(requests);
+
+  } catch (error) {
+    res.status(500).json({ message: 'Internal Server Error', error: error.message });
+  }
+};
+
+
+
+const RoleChange = async (req, res) => {
+  const userId = res.locals.userId; 
+  const roleId = res.locals.userrole
+
+  try {
+    const userProfile = await User.findById(userId);
+
+    if (!userProfile) {
+      return res.status(404).json({ message: 'User profile not found' });
+    }
+
+    const role = await Role.findById(roleId);
+    
+    if (!role) {
+      return res.status(405).json({ message: 'Role not found' });
+    }
+
+    const newRequest = new Request({
+      requestType: 'role change',
+      requestData: {
+        email: userProfile.email,
+        role: role.roleName,
+        newRole: req.body.newRole
+      },
+        // Pass the role from the request
+      status: 'pending',  
+    });
+
+    // Save the request to the database
+    await newRequest.save();
+
+    
+
+    res.status(200).json({ message: 'User profile not found' });
+
+  } catch (error) {
+    res.status(500).json({ message: 'Internal Server Error', error: error.message });
+  }
+};
+
+
+const PermissionChange = async (req, res) => {
+  const userId = res.locals.userId; 
+  
+
+  try {
+    // Fetch user profile
+    const userProfile = await User.findById(userId);
+
+    if (!userProfile) {
+      return res.status(404).json({ message: 'User profile not found' });
+    }
+
+  
+
+    const { newPermissions } = req.body;
+
+    // Validate permissions
+    if (!Array.isArray(newPermissions) || newPermissions.length === 0) {
+      return res.status(400).json({ message: 'Permissions must be a non-empty array' });
+    }
+
+    // Create a new permission change request
+    const newRequest = new Request({
+      requestType: 'permission change',
+      requestData: {
+        email: userProfile.email,
+        permissions: newPermissions,
+      },
+      status: 'pending',
+    });
+
+    // Save the request to the database
+    await newRequest.save();
+
+    res.status(200).json({ message: 'Permission change request submitted successfully' });
+
+  } catch (error) {
+    res.status(500).json({ message: 'Internal Server Error', error: error.message });
+  }
+};
+
+
+
+module.exports = { RegisterUser, LoginUser, VerifyEmail, RegisterUserGoogle, LoginGoogle, GetUserProfile, ProtectedRoute, GetRequests, RoleChange, PermissionChange, VerifyUserCredentials, UpdateUserPassword}

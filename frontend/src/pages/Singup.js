@@ -173,7 +173,7 @@ const SignupPage = () => {
                 });
                 if (response2.status === 400) {
                 setStep(1);
-                setError("You already have an account through mauual Signup. Please Login Manually")
+                setError("You already have an account through manual Signup. Please login manually.")
                 }
                 else if (response2.status === 200) {
                     const responseData = await response2.json();

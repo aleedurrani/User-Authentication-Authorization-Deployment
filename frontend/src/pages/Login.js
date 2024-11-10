@@ -104,7 +104,7 @@ const LoginPage = () => {
                     }),
                 });
                 if (response2.status === 400) {
-                setError("You already have an account through mauual Signup. Please Login Manually")
+                setError("You have an account through manual Signup. Please login manually.")
                 }
                 else if (response2.status === 200) {
                     const responseData = await response2.json();
@@ -241,7 +241,7 @@ const LoginPage = () => {
                     </button>
                 </form>
                 <div className="mt-6 text-center text-sm">
-                    <a href="/resetpassword" className="text-blue-500 hover:underline">
+                    <a href="/reset-password" className="text-blue-500 hover:underline">
                         Reset password
                     </a>
                     <span className="mx-2 text-gray-500">•</span>
