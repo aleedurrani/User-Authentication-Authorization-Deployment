@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FaGoogle} from 'react-icons/fa';
 import { initializeApp } from "firebase/app";
+import { useNavigate } from "react-router-dom";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
 
@@ -32,6 +33,7 @@ const SignupPage = () => {
     const [pin, setPin] = useState(['', '', '', '', '']);
     const [returnedPin, setReturnedPin] = useState("")
     const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         setError(null)
@@ -158,8 +160,30 @@ const SignupPage = () => {
                 }),
             });
             if (response.status === 400) {
+                // User exits
+                const response2 = await fetch("http://localhost:3001/auth/loginGoogle", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        email: user.email,
+                        googleId: user.uid
+                    }),
+                });
+                if (response2.status === 400) {
                 setStep(1);
-                setError("You already have an account. Please Login")
+                setError("You already have an account through mauual Signup. Please Login Manually")
+                }
+                else if (response2.status === 200) {
+                    const responseData = await response2.json();
+                    localStorage.setItem("token", responseData.token); // Store JWT token
+                    localStorage.setItem("userId", responseData.user._id); // Store user ID
+                    localStorage.setItem("userFullName", responseData.user.FullName); // Store full name
+                    console.log(localStorage.getItem('token'))
+                    navigate("/home")
+                }
+
             } else if (response.status === 403) {
                 setStep(1);
                 setError("You already have a pending signup request.")
@@ -215,6 +239,7 @@ const SignupPage = () => {
                     setLastName('');
                     setPin(['', '', '', '', ''])
                     setRole('');
+                    setError("")
                     setSuccess("Signup request has been submitted. You'll be notified via email");
                 } else {
                     setEmail('')
@@ -223,6 +248,7 @@ const SignupPage = () => {
                     setLastName('');
                     setPin(['', '', '', '', ''])
                     setRole('');
+                    setSuccess("")
                     setError("Registration failed. Please try again.");
                 }
             } catch (error) {

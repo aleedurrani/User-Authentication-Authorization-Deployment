@@ -8,8 +8,6 @@ const roleSchema = new mongoose.Schema({
       "Patient",
       "Doctor",
       "Nurse",
-      "Admin",
-      "SuperAdmin",
       "Pharmacist",
       "LabTechnician"
     ],

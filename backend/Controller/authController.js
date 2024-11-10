@@ -141,14 +141,26 @@ let VerifyEmail = async (req, res) => {
 
 let LoginUser = async (req, res) => {
   try {
-    const user = await User.findOne({ Email: req.body.Email });
+    const user = await User.findOne({ email: req.body.Email });
 
     if (!user) {
       // If user is not found, return an appropriate response
+      const existingRequest = await Request.findOne({ 
+        requestType: 'signup', 
+        'requestData.email': req.body.Email, 
+        status: 'pending' 
+      });
+      if (existingRequest) {
+        return res.status(403).json({ message: "A signup request is already pending for this email." });
+      }
+      else {
       return res.status(400).json("Wrong credentials!");
+      }
     }
 
-    const validated = await bcrypt.compare(req.body.Password, user.Password);
+    
+
+    const validated = await bcrypt.compare(req.body.Password, user.passwordHash);
 
     if (!validated) {
       // If password is incorrect, return an appropriate response
@@ -163,7 +175,7 @@ let LoginUser = async (req, res) => {
       token,  // JWT token
       user: {
         _id: user._id,       // Return user ID
-        FullName: user.FirstName + " " + user.LastName  // Return full name
+        FullName: user.name // Return full name
       }
     });
 
@@ -176,4 +188,35 @@ let LoginUser = async (req, res) => {
 };
 
 
-module.exports = { RegisterUser, LoginUser, VerifyEmail, RegisterUserGoogle}
+
+let LoginGoogle = async (req, res) => {
+  try {
+    const { email, googleId} = req.body;
+
+    // Check if user already exists
+    const user = await User.findOne({ email: email});
+
+    const id = user.googleId;
+    
+
+    if (id){
+      const token = generateToken(user);
+    
+      res.status(200).json({
+        token,  // JWT token
+        user: {
+          _id: user._id,       // Return user ID
+          FullName: user.name // Return full name
+        }
+      });
+    } else {
+      res.status(400).json("Login Manually");
+    }
+
+  } catch (error) {
+    res.status(500).json({ message: 'Authentication failed'});
+  }
+};
+
+
+module.exports = { RegisterUser, LoginUser, VerifyEmail, RegisterUserGoogle, LoginGoogle}
