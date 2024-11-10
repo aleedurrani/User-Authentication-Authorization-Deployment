@@ -1,7 +1,9 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { format } = require('date-fns');
 const User = require('../Models/User')
 const Request = require('../Models/Request')
+const Role = require('../Models/Role')
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 
@@ -218,5 +220,56 @@ let LoginGoogle = async (req, res) => {
   }
 };
 
+let GetUserProfile = async (req,res) =>{
 
-module.exports = { RegisterUser, LoginUser, VerifyEmail, RegisterUserGoogle, LoginGoogle}
+  const userId = res.locals.userId; 
+  const roleId = res.locals.userrole
+   
+  try {
+    const userProfile = await User.findById(userId);
+
+    if (!userProfile) {
+      return res.status(404).json({ message: 'User profile not found' });
+    }
+
+    const role = await Role.findById(roleId);
+    
+    if (!role) {
+      return res.status(405).json({ message: 'Role not found' });
+    }
+  
+    const memberSince = format(new Date(userProfile.createdAt), 'MMMM dd, yyyy');
+
+
+    res.status(200).json({
+      name: userProfile.name,
+    email: userProfile.email,
+    status: userProfile.status,
+    role: role.roleName,
+    permissions: role.permissions,
+    joined: memberSince
+
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+}
+
+
+
+const ProtectedRoute = async (req, res) =>{
+  const { userId } = req.body; // Expecting userId from the request body
+  const decodedUserId = res.locals.userId; // The ID from the decoded token
+
+  // Check if the IDs match
+  if (decodedUserId === userId) {
+    return res.status(200).json({ message: 'Token is valid', userId: decodedUserId, userFullName: res.locals.userFullName });
+  } else {
+    return res.status(401).json('Access denied: Invalid user ID');
+  }
+};
+
+
+
+module.exports = { RegisterUser, LoginUser, VerifyEmail, RegisterUserGoogle, LoginGoogle, GetUserProfile, ProtectedRoute}

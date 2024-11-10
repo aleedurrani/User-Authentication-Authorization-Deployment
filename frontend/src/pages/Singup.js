@@ -180,8 +180,7 @@ const SignupPage = () => {
                     localStorage.setItem("token", responseData.token); // Store JWT token
                     localStorage.setItem("userId", responseData.user._id); // Store user ID
                     localStorage.setItem("userFullName", responseData.user.FullName); // Store full name
-                    console.log(localStorage.getItem('token'))
-                    navigate("/home")
+                    navigate("/profile")
                 }
 
             } else if (response.status === 403) {
