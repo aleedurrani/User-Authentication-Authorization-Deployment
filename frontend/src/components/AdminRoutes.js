@@ -7,10 +7,8 @@ const AdminRoute = ({ element: Component, ...rest }) => {
   useEffect(() => {
     const verifyAdmin = async () => {
       const token = localStorage.getItem('token');
-      const userId = localStorage.getItem('userId');
-      const userFullName = localStorage.getItem('userFullName');
 
-      if (!token || !userId || !userFullName) {
+      if (!token) {
         setIsAdmin(false);
         return;
       }
@@ -21,9 +19,8 @@ const AdminRoute = ({ element: Component, ...rest }) => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            token: token, // Send token in authorization header
+            token: token, // Send token in headers
           },
-          body: JSON.stringify({ userId, userFullName }), // Send userId and userFullName in the request body
         });
 
         if (response.ok) {

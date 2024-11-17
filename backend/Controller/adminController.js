@@ -74,19 +74,19 @@ const rejectRequest = async (req, res) => {
 };
 
 const verifyAdmin = async (req, res) => {
-    try {
-      const userId = res.locals.userId; // From verifyToken middleware
-  
-      const admin = await Admin.findById(userId);
-      if (admin) {
-        res.status(200).json({ isAdmin: true });
-      } else {
-        res.status(200).json({ isAdmin: false });
-      }
-    } catch (error) {
-      console.error('Error verifying admin:', error);
-      res.status(500).json({ message: 'Internal Server Error' });
+  try {
+    const userId = res.locals.userId; // From verifyToken middleware
+
+    const user = await User.findById(userId);
+    if (user && user.role === 'Admin') {
+      res.status(200).json({ isAdmin: true });
+    } else {
+      res.status(200).json({ isAdmin: false });
     }
+  } catch (error) {
+    console.error('Error verifying admin:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
 };
 
 const getAllRoles = async (req, res) => {

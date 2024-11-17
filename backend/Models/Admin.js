@@ -15,10 +15,7 @@ const adminSchema = new mongoose.Schema({
   }
 });
 
-// Inherit User schema properties
-adminSchema.add(User.schema);
-
-// Create an Admin model
-const Admin = mongoose.model("Admin", adminSchema);
+// Create an Admin discriminator
+const Admin = User.discriminator("Admin", adminSchema);
 
 module.exports = Admin;

@@ -58,6 +58,10 @@ const UserProfile = () => {
     navigate("/");
   };
 
+  const handleNavigateRequests = () => {
+    navigate("/admin/requests");
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Enhanced Navbar */}
@@ -74,7 +78,10 @@ const UserProfile = () => {
               </span>
             </div>
             <div className="flex items-center space-x-6">
-              <button className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors duration-300">
+              <button
+                onClick={handleNavigateRequests} 
+                className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors duration-300"
+              >
                 <Inbox className="h-5 w-5 mr-2 text-gray-500" />
                 My Requests
               </button>

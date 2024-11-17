@@ -1,29 +1,31 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const bcrypt = require('bcrypt');
-const Admin = require('./Models/Admin');
+const User = require('./Models/User'); // Use User model directly
+
+const adminEmail = "admin@example.com";
+const adminPass= "adminpassword";
 
 dotenv.config();
 
 const createAdmin = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_STRING, {
-    });
+    await mongoose.connect(process.env.MONGODB_STRING, {});
 
-    const existingAdmin = await Admin.findOne({ email: 'admin@example.com' });
+    const existingAdmin = await User.findOne({ email: adminEmail });
     if (existingAdmin) {
       console.log('Admin user already exists.');
       return;
     }
 
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash('adminpassword', salt);
+    const hashedPassword = await bcrypt.hash(adminPass, salt);
 
-    const admin = new Admin({
-      email: 'admin@example.com',
+    const admin = new User({
+      email: adminEmail,
       name: 'Admin User',
       passwordHash: hashedPassword,
-      role: 'Admin',
+      role: 'Admin', // Ensure role is set to 'Admin'
       permissions: [
         "create_user",
         "delete_user",

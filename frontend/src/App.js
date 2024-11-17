@@ -23,22 +23,21 @@ const App = () => {
         />
 
         <Route
-          path="/admin/Requests"
+          path="/admin/requests"
           element={<AdminRoute element={Requests} />}
         />
 
         <Route
-          path="/admin/Roles"
+          path="/admin/roles"
           element={<AdminRoute element={Roles} />}
         />
 
         <Route
-          path="/admin/Permissions"
+          path="/admin/permissions"
           element={<AdminRoute element={Permissions} />}
         />
 
         <Route path="/not-authorized" element={<NotAuthorized />} />
-
       </Routes>
     </Router>
   );

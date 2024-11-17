@@ -18,7 +18,6 @@ const generateToken = (user) => {
   });
 };
 
-
 let RegisterUser = async (req, res) => {
   try {
     // Check if the user already exists
