@@ -1,23 +1,25 @@
-const Admin = require('../Models/Admin');
+const jwt = require("jsonwebtoken");
+const Admin = require("../Models/Admin");
 
-const isAdmin = async (req, res, next) => {
+const AuthAdmin = async (req, res, next) => {
   try {
+    const token = req.headers.token;
+    if (!token) return res.status(401).json("Access denied. No token provided.");
 
-    if (!req.user) {
-      return res.status(401).json({ message: 'Unauthorized: Please log in.' });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded._id;
+
+    const admin = await Admin.findById(userId);
+    if (!admin) {
+      return res.status(403).json("Access denied. Not an admin.");
     }
 
-    const adminExists = await Admin.exists({ _id: req.user._id });
-
-    if (adminExists) {
-      next();
-    } else {
-      return res.status(403).json({ message: 'Forbidden: Admins only.' });
-    }
+    req.admin = admin;
+    next();
   } catch (error) {
-    console.error('Error verifying admin status:', error);
-    res.status(500).json({ message: 'Internal server error.' });
+    console.error("AuthAdmin middleware error:", error);
+    res.status(400).json("Invalid token.");
   }
 };
 
-module.exports = isAdmin;
+module.exports = AuthAdmin;

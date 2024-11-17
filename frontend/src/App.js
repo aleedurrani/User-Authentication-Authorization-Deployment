@@ -3,40 +3,41 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import SignupPage from "./pages/Singup";
 import LoginPage from "./pages/Login";
 import Profile from "./pages/Profile";
-import Requests from "./pages/Admin/Requests";
-import Roles from "./pages/Admin/Roles";
-import Permissions from "./pages/Admin/Permissions";
+import Requests from "./pages/Admin/Requests.js";
+import Roles from "./pages/Admin/Roles.js";
+import Permissions from "./pages/Admin/Permissions.js";
 import ProtectedRoute from "./components/ProtectedRoute";
-
+import AdminRoute from "./components/AdminRoutes";
+import NotAuthorized from "./pages/NotAuthorized";
 
 const App = () => {
   return (
     <Router>
       <Routes>
-        
-        <Route path="/" element={<SignupPage/>} />
-        <Route path="/login" element={<LoginPage/>} />
-        
+        <Route path="/" element={<SignupPage />} />
+        <Route path="/login" element={<LoginPage />} />
+
         <Route
           path="/profile"
           element={<ProtectedRoute element={Profile} />}
         />
 
-        <Route 
-        path="/admin/Requests" 
-        element={<ProtectedRoute element={Requests} />}
+        <Route
+          path="/admin/Requests"
+          element={<AdminRoute element={Requests} />}
         />
 
-        <Route 
-        path="/admin/Roles" 
-        element={<ProtectedRoute element={Roles} />}
+        <Route
+          path="/admin/Roles"
+          element={<AdminRoute element={Roles} />}
         />
 
-        <Route 
-        path="/admin/Permissions" 
-        element={<ProtectedRoute element={Permissions} />}
+        <Route
+          path="/admin/Permissions"
+          element={<AdminRoute element={Permissions} />}
         />
 
+        <Route path="/not-authorized" element={<NotAuthorized />} />
 
       </Routes>
     </Router>
