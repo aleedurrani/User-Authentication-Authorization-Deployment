@@ -1,5 +1,5 @@
+// src/pages/Admin/Requests.js
 import React, { useEffect, useState } from 'react';
-import ProtectedRoute from '../../components/ProtectedRoute';
 import AdminRoute from '../../components/AdminRoutes';
 
 const Requests = () => {
@@ -10,14 +10,37 @@ const Requests = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [actionMessage, setActionMessage] = useState('');
+  const [roles, setRoles] = useState([]);
 
   useEffect(() => {
+    fetchRoles();
     fetchRequests();
   }, []);
 
   useEffect(() => {
     filterRequests();
   }, [searchEmail, searchRole, requests]);
+
+  const fetchRoles = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:3001/auth/admin/permissions', {
+        headers: {
+          'Content-Type': 'application/json',
+          token: token,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setRoles(data);
+      } else {
+        console.error('Failed to fetch roles.');
+      }
+    } catch (err) {
+      console.error('Error fetching roles:', err);
+    }
+  };
 
   const fetchRequests = async () => {
     setLoading(true);
@@ -111,6 +134,11 @@ const Requests = () => {
     }
   };
 
+  const getPermissions = (roleName) => {
+    const role = roles.find(r => r.roleName === roleName);
+    return role ? role.permissions : ['No permissions found'];
+  };
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Signup Requests</h1>
@@ -174,8 +202,11 @@ const Requests = () => {
                     <td className="py-2 px-4 border-b">{request.requestData.email}</td>
                     <td className="py-2 px-4 border-b">{request.requestData.role}</td>
                     <td className="py-2 px-4 border-b">
-                      {/* Fetch permissions based on role */}
-                      <RolePermissions role={request.requestData.role} />
+                      <ul className="list-disc list-inside">
+                        {getPermissions(request.requestData.role).map((perm, index) => (
+                          <li key={index}>{perm}</li>
+                        ))}
+                      </ul>
                     </td>
                     <td className="py-2 px-4 border-b">
                       <button
@@ -202,46 +233,4 @@ const Requests = () => {
   );
 };
 
-const RolePermissions = ({ role }) => {
-  const [permissions, setPermissions] = useState([]);
-
-  useEffect(() => {
-    const fetchPermissions = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:3001/auth/admin/permissions', {
-          headers: {
-            'Content-Type': 'application/json',
-            token: token,
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const roleData = data.find(r => r.roleName === role);
-          if (roleData) {
-            setPermissions(roleData.permissions);
-          } else {
-            setPermissions(['No permissions found']);
-          }
-        } else {
-          setPermissions(['Error fetching permissions']);
-        }
-      } catch (err) {
-        setPermissions(['Error fetching permissions']);
-      }
-    };
-
-    fetchPermissions();
-  }, [role]);
-
-  return (
-    <ul className="list-disc list-inside">
-      {permissions.map((perm, index) => (
-        <li key={index}>{perm}</li>
-      ))}
-    </ul>
-  );
-};
-
-export default AdminRoute(Requests);
+export default Requests;

@@ -4,7 +4,7 @@ const AuthAdmin = require("./AuthAdmin");
 
 const {RegisterUser, LoginUser, VerifyEmail, RegisterUserGoogle, LoginGoogle, GetUserProfile, ProtectedRoute} = require('../Controller/authController')
 
-const {AdminRequests, AdminRoles, AdminPermissions, verifyAdmin, getAdminRequests, approveRequest, rejectRequest} = require('../Controller/adminController')
+const {AdminRequests, AdminRoles, AdminPermissions, getAllRoles, verifyAdmin, getAdminRequests, approveRequest, rejectRequest} = require('../Controller/adminController')
 
 
  router.post('/register', RegisterUser);
@@ -20,6 +20,8 @@ const {AdminRequests, AdminRoles, AdminPermissions, verifyAdmin, getAdminRequest
  router.post('/admin/requests/:id/approve', AuthAdmin, approveRequest);
  router.post('/admin/requests/:id/reject', AuthAdmin, rejectRequest);
  router.post('/admin/verifyAdmin', verifyToken, verifyAdmin);
+ router.get('/admin/permissions', AuthAdmin, getAllRoles);
+
 
  //router.get('/admin/roles', AuthAdmin, AdminRoles);
  //router.get('/admin/permissions', AuthAdmin, AdminPermissions);
