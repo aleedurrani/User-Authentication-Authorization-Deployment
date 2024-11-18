@@ -1,4 +1,3 @@
-// src/pages/Admin/Requests.js
 import React, { useEffect, useState } from 'react';
 import AdminRoute from '../../components/AdminRoutes';
 
@@ -98,7 +97,6 @@ const Requests = () => {
 
       if (response.ok) {
         setActionMessage('Request approved successfully.');
-        // Remove the approved request from the list
         setRequests(requests.filter(request => request._id !== id));
       } else {
         const errorData = await response.json();
@@ -123,7 +121,6 @@ const Requests = () => {
 
       if (response.ok) {
         setActionMessage('Request rejected successfully.');
-        // Remove the rejected request from the list
         setRequests(requests.filter(request => request._id !== id));
       } else {
         const errorData = await response.json();

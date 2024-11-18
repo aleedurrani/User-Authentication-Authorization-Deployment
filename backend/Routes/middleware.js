@@ -1,6 +1,5 @@
 const jwt = require("jsonwebtoken");
 
-// Middleware to verify JWT token
 const verifyToken = (req, res, next) => {
   try {
     const token = req.headers.token;
@@ -9,10 +8,8 @@ const verifyToken = (req, res, next) => {
     let decoded;
     decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Access _id and role from the decoded token
     const { _id, role } = decoded;
 
-    // Store user information in res.locals for further use in the route handlers
     res.locals.userId = _id;
     res.locals.userrole = role;
    

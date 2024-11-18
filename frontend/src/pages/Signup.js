@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
 
-// Your Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyCaUh1JJX3EbZLI_-3AQKguNx81VLIbgY4",
     authDomain: "healthcaresystem-ffac8.firebaseapp.com",
@@ -15,7 +14,6 @@ const firebaseConfig = {
     appId: "1:70847912770:web:d37eba6eabd8916ebc06db"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
@@ -149,7 +147,6 @@ const SignupPage = () => {
 
             const user = result.user;
 
-            // Send the Google user data to your backend
             const response = await fetch("http://localhost:3001/auth/register", {
                 method: "POST",
                 headers: {
@@ -160,7 +157,6 @@ const SignupPage = () => {
                 }),
             });
             if (response.status === 400) {
-                // User exits
                 const response2 = await fetch("http://localhost:3001/auth/loginGoogle", {
                     method: "POST",
                     headers: {
@@ -177,9 +173,9 @@ const SignupPage = () => {
                 }
                 else if (response2.status === 200) {
                     const responseData = await response2.json();
-                    localStorage.setItem("token", responseData.token); // Store JWT token
-                    localStorage.setItem("userId", responseData.user._id); // Store user ID
-                    localStorage.setItem("userFullName", responseData.user.FullName); // Store full name
+                    localStorage.setItem("token", responseData.token);
+                    localStorage.setItem("userId", responseData.user._id);
+                    localStorage.setItem("userFullName", responseData.user.FullName); 
                     navigate("/profile")
                 }
 
@@ -251,7 +247,6 @@ const SignupPage = () => {
                     setError("Registration failed. Please try again.");
                 }
             } catch (error) {
-                // Handle any error that might occur during the fetch or request process
                 setError(`Error: ${error.message}`);
             }
         }

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
 const AdminRoute = ({ element: Component, ...rest }) => {
-  const [isAdmin, setIsAdmin] = useState(null); // Null initially while verifying
+  const [isAdmin, setIsAdmin] = useState(null); 
 
   useEffect(() => {
     const verifyAdmin = async () => {
@@ -14,12 +14,11 @@ const AdminRoute = ({ element: Component, ...rest }) => {
       }
 
       try {
-        // Call your backend to verify the token and check if the user is an admin
         const response = await fetch('http://localhost:3001/auth/admin/verifyAdmin', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            token: token, // Send token in headers
+            token: token, 
           },
         });
 
@@ -38,7 +37,6 @@ const AdminRoute = ({ element: Component, ...rest }) => {
   }, []);
 
   if (isAdmin === null) {
-    // You can add a loading spinner here while verifying admin status
     return <div>Loading...</div>;
   }
 

@@ -20,7 +20,6 @@ const generateToken = (user) => {
 
 let RegisterUser = async (req, res) => {
   try {
-    // Check if the user already exists
     const existingUser = await User.findOne({ email: req.body.Email });
 
     if (existingUser) {
@@ -39,7 +38,6 @@ let RegisterUser = async (req, res) => {
     if (req.body.Password && req.body.FirstName && req.body.LastName && req.body.Role) {
     const salt = await bcrypt.genSalt(10);
     const hashedPass = await bcrypt.hash(req.body.Password, salt);
-    // Create a new request entry
     const newRequest = new Request({
       requestType: 'signup',
       requestData: {
@@ -48,11 +46,9 @@ let RegisterUser = async (req, res) => {
         name: req.body.FirstName + " " + req.body.LastName,
         role: req.body.Role,
       },
-        // Pass the role from the request
       status: 'pending',  
     });
 
-    // Save the request to the database
     await newRequest.save();
 
  
@@ -72,7 +68,6 @@ let RegisterUserGoogle = async (req, res) => {
     const randomPassword = crypto.randomBytes(8).toString('hex'); 
     const salt = await bcrypt.genSalt(10); 
     const hashedPass = await bcrypt.hash(randomPassword, salt); 
-    // Create a new request entry
 
     const newRequest = new Request({
       requestType: 'signup',
@@ -82,12 +77,10 @@ let RegisterUserGoogle = async (req, res) => {
         name: req.body.FirstName + " " + req.body.LastName,
         role: req.body.Role,
       },
-        // Pass the role from the request
       status: 'pending',  
       googleId: req.body.GoogleId
     });
 
-    // Save the request to the database
     await newRequest.save();
 
  
@@ -103,9 +96,8 @@ let RegisterUserGoogle = async (req, res) => {
 let VerifyEmail = async (req, res) => {
   try {
     
-    const pin = crypto.randomInt(10000, 99999); // Generate a 6-digit PIN
+    const pin = crypto.randomInt(10000, 99999); 
    
-    // Set up Nodemailer to send the email
     const transporter = nodemailer.createTransport({
       service: "Gmail",
       auth: {
@@ -123,7 +115,7 @@ let VerifyEmail = async (req, res) => {
 
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        console.error('Error sending email:', error); // Log the specific error
+        console.error('Error sending email:', error); 
         return res.status(401).json({ message: "Error sending email", error: error.message });
       }
       res.status(200).json({ message: "PIN sent to your email", pin: pin });
@@ -143,7 +135,6 @@ let LoginUser = async (req, res) => {
     const user = await User.findOne({ email: req.body.Email });
 
     if (!user) {
-      // If user is not found, return an appropriate response
       const existingRequest = await Request.findOne({ 
         requestType: 'signup', 
         'requestData.email': req.body.Email, 
@@ -162,7 +153,6 @@ let LoginUser = async (req, res) => {
     const validated = await bcrypt.compare(req.body.Password, user.passwordHash);
 
     if (!validated) {
-      // If password is incorrect, return an appropriate response
       return res.status(400).json("Wrong credentials!");
     }
 
@@ -171,16 +161,15 @@ let LoginUser = async (req, res) => {
     
 
     res.status(200).json({
-      token,  // JWT token
+      token, 
       user: {
-        _id: user._id,       // Return user ID
-        FullName: user.name // Return full name
+        _id: user._id,
+        FullName: user.name 
       }
     });
 
 
   } catch (err) {
-    // Handle other errors, e.g., database connection issues
     console.error(err);
     res.status(500).json("Internal server error happens");
   }
@@ -192,7 +181,6 @@ let LoginGoogle = async (req, res) => {
   try {
     const { email, googleId} = req.body;
 
-    // Check if user already exists
     const user = await User.findOne({ email: email});
 
     const id = user.googleId;
@@ -202,10 +190,10 @@ let LoginGoogle = async (req, res) => {
       const token = generateToken(user);
     
       res.status(200).json({
-        token,  // JWT token
+        token,  
         user: {
-          _id: user._id,       // Return user ID
-          FullName: user.name // Return full name
+          _id: user._id, 
+          FullName: user.name
         }
       });
     } else {
@@ -257,10 +245,9 @@ let GetUserProfile = async (req,res) =>{
 
 
 const ProtectedRoute = async (req, res) =>{
-  const { userId } = req.body; // Expecting userId from the request body
-  const decodedUserId = res.locals.userId; // The ID from the decoded token
+  const { userId } = req.body; 
+  const decodedUserId = res.locals.userId;
 
-  // Check if the IDs match
   if (decodedUserId === userId) {
     return res.status(200).json({ message: 'Token is valid', userId: decodedUserId, userFullName: res.locals.userFullName });
   } else {

@@ -75,7 +75,7 @@ const rejectRequest = async (req, res) => {
 
 const verifyAdmin = async (req, res) => {
   try {
-    const userId = res.locals.userId; // From verifyToken middleware
+    const userId = res.locals.userId; 
 
     const user = await User.findById(userId);
     if (user && user.role === 'Admin') {
@@ -178,7 +178,7 @@ const updateUserRoleAndStatus = async (req, res) => {
           return res.status(400).json({ message: 'Provided role does not exist.' });
         }
         user.role = role;
-        user.permissions = roleData.permissions; // Optionally reset permissions based on role
+        user.permissions = roleData.permissions;
       }
   
       if (status) {

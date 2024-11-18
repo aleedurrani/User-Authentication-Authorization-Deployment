@@ -4,29 +4,29 @@ const RequestSchema = new mongoose.Schema({
   requestType: { 
     type: String, 
     required: true, 
-    enum: ['signup', 'role change', 'permission change']  // Limit to these request types
+    enum: ['signup', 'role change', 'permission change'] 
   },
   requestData: {
     email: { type: String, required: true },
     password: { 
       type: String, 
-      required: function() { return this.requestType === 'signup'; }  // Required only for signup
+      required: function() { return this.requestType === 'signup'; } 
     },
     name: { 
       type: String, 
-      required: function() { return this.requestType === 'signup'; }  // Required only for signup
+      required: function() { return this.requestType === 'signup'; }  
     },
     role: { 
       type: String, 
-      required: function() { return this.requestType === 'signup' || this.requestType === 'role change'; }  // Required for signup and role change
+      required: function() { return this.requestType === 'signup' || this.requestType === 'role change'; }  
     },
     newRole: { 
       type: String, 
-      required: function() { return this.requestType === 'role change'; }  // Required only for role change
+      required: function() { return this.requestType === 'role change'; }  
     },
     permissions: {
-      type: [String],  // Array of permissions
-      required: function() { return this.requestType === 'permission change'; }  // Required only for permission change
+      type: [String], 
+      required: function() { return this.requestType === 'permission change'; }  
     },
   },
   googleId: { 

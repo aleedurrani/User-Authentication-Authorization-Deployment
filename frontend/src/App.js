@@ -4,8 +4,8 @@ import SignupPage from "./pages/Signup";
 import LoginPage from "./pages/Login";
 import Profile from "./pages/Profile";
 import Requests from "./pages/Admin/Requests.js";
-import Roles from "./pages/Admin/Roles.js";
-import Permissions from "./pages/Admin/Permissions.js";
+import Permissions from "./pages/Admin/Permissions.js"; 
+import Roles from "./pages/Admin/Roles.js"; 
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoutes";
 import NotAuthorized from "./pages/NotAuthorized";
@@ -35,6 +35,16 @@ const App = () => {
         <Route
           path="/admin/permissions"
           element={<AdminRoute element={Permissions} />}
+        />
+
+        <Route
+          path="/admin/manage-permissions"
+          element={<AdminRoute element={Permissions} />}  
+        />
+
+        <Route
+          path="/admin/manage-roles"
+          element={<AdminRoute element={Roles} />} 
         />
 
         <Route path="/not-authorized" element={<NotAuthorized />} />

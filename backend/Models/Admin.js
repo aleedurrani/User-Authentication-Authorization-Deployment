@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
-const User = require("./User"); // Import the User model
+const User = require("./User"); 
 
-// Define the Admin schema that extends the User schema
 const adminSchema = new mongoose.Schema({
   permissions: {
     type: [String],
@@ -15,7 +14,6 @@ const adminSchema = new mongoose.Schema({
   }
 });
 
-// Create an Admin discriminator
 const Admin = User.discriminator("Admin", adminSchema);
 
 module.exports = Admin;

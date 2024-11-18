@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const bcrypt = require('bcrypt');
-const User = require('./Models/User'); // Use User model directly
+const User = require('./Models/User');
 
 const adminEmail = "admin@example.com";
 const adminPass= "adminpassword";
@@ -25,7 +25,7 @@ const createAdmin = async () => {
       email: adminEmail,
       name: 'Admin User',
       passwordHash: hashedPassword,
-      role: 'Admin', // Ensure role is set to 'Admin'
+      role: 'Admin', 
       permissions: [
         "create_user",
         "delete_user",

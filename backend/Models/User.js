@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-      match: /.+\@.+\..+/ // Basic email format validation
+      match: /.+\@.+\..+/ 
     },
     name: {
       type: String,
@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       required: true,
-      enum: ["Patient", "Doctor", "Nurse", "Pharmacist", "Lab Technician", "Admin"] // Include 'Admin' role
+      enum: ["Patient", "Doctor", "Nurse", "Pharmacist", "Lab Technician", "Admin"] 
     },
     status: {
       type: String,
@@ -41,12 +41,11 @@ const userSchema = new mongoose.Schema(
     },
   },
   { 
-    discriminatorKey: 'userType', // Key to differentiate user types
-    collection: 'users' // Ensure all users are in the same collection
+    discriminatorKey: 'userType',
+    collection: 'users' 
   }
 );
 
-// Create a User model
 const User = mongoose.model("User", userSchema);
 
 module.exports = User;
