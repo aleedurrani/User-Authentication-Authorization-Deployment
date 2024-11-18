@@ -229,7 +229,8 @@ let GetUserProfile = async (req,res) =>{
       return res.status(404).json({ message: 'User profile not found' });
     }
 
-    const role = await Role.findById(roleId);
+    const role = await Role.findOne({ roleName: userrole });
+
     
     if (!role) {
       return res.status(405).json({ message: 'Role not found' });

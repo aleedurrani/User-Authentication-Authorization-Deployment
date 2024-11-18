@@ -7,22 +7,18 @@ const ProtectedRoute = ({ element: Component, ...rest }) => {
   useEffect(() => {
     const verifyToken = async () => {
       const token = localStorage.getItem('token');
-      const userId = localStorage.getItem('userId');
-      const userFullName = localStorage.getItem('userFullName');
 
-      if (!token || !userId || !userFullName) {
-        console.log(token, userId, userFullName)
+      if (!token) {
         setIsAuthenticated(false);
         return;
       }
 
       try {
-        // Call your backend to verify the token along with userId and userFullName
         const response = await fetch('http://localhost:3001/auth/protectedRoute', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-             token: token, // Send token in authorization header
+            'Authorization': `Bearer ${token}`,
           },
           body: JSON.stringify({ userId, userFullName }), // Send userId and userFullName in the request body
         });
@@ -30,9 +26,7 @@ const ProtectedRoute = ({ element: Component, ...rest }) => {
         if (response.ok) {
           setIsAuthenticated(true);
         } else {
-          localStorage.removeItem('token'); 
-          localStorage.removeItem('userId');
-          localStorage.removeItem('userFullName');
+          localStorage.removeItem('token');
           setIsAuthenticated(false);
         }
       } catch (err) {
@@ -44,7 +38,6 @@ const ProtectedRoute = ({ element: Component, ...rest }) => {
   }, []);
 
   if (isAuthenticated === null) {
-    // You can add a loading spinner here while verifying token
     return <div>Loading...</div>;
   }
 

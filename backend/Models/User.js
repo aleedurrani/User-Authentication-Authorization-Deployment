@@ -38,7 +38,8 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
       required: true
-    }
+    },
+    googleId: request.requestData.googleId || undefined,
   },
   { 
     discriminatorKey: 'userType', // Key to differentiate user types
