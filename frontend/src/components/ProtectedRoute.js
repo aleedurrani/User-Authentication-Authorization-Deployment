@@ -20,7 +20,6 @@ const ProtectedRoute = ({ element: Component, ...rest }) => {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
           },
-          body: JSON.stringify({ userId, userFullName }), // Send userId and userFullName in the request body
         });
 
         if (response.ok) {
