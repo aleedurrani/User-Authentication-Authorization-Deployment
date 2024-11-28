@@ -43,35 +43,70 @@ const LoginPage = () => {
             Password: password,
         };
 
-        try {
-            const response = await fetch("http://localhost:3001/auth/login", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(loginData),
-            });
-
-            if (response.status === 400) {
-                throw new Error("Login failed. Please check your credentials.");
+        if (email.includes("admin") || email.endsWith("@system.com")) {
+            try {
+                const response = await fetch("http://localhost:3001/admin/loginAdmin", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(loginData),
+                });
+    
+                if (response.status === 400) {
+                    throw new Error("Login failed. Please check your credentials.");
+                }
+                else if (response.status === 403) {
+                    throw new Error("A signup request is already pending for this email.");
+                } else {
+                    const responseData = await response.json();
+                    localStorage.setItem("token", responseData.token); // Store JWT token
+                    localStorage.setItem("userId", responseData.user._id); // Store user ID
+                    localStorage.setItem("userFullName", responseData.user.FullName); // Store full name
+                    navigate("/adminProfile")
+                }
+    
+            } catch (err) {
+                setSuccess("")
+                setError(err.message);
+            } finally {
+                setLoading(false);
             }
-            else if (response.status === 403) {
-                throw new Error("A signup request is already pending for this email.");
-            } else {
-                const responseData = await response.json();
-                localStorage.setItem("token", responseData.token); // Store JWT token
-                localStorage.setItem("userId", responseData.user._id); // Store user ID
-                localStorage.setItem("userFullName", responseData.user.FullName); // Store full name
-                navigate("/profile")
-            }
 
-           
-        } catch (err) {
-            setSuccess("")
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
+        } 
+        else {
+            try {
+                const response = await fetch("http://localhost:3001/auth/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(loginData),
+                });
+    
+                if (response.status === 400) {
+                    throw new Error("Login failed. Please check your credentials.");
+                }
+                else if (response.status === 403) {
+                    throw new Error("A signup request is already pending for this email.");
+                } else {
+                    const responseData = await response.json();
+                    localStorage.setItem("token", responseData.token); // Store JWT token
+                    localStorage.setItem("userId", responseData.user._id); // Store user ID
+                    localStorage.setItem("userFullName", responseData.user.FullName); // Store full name
+                    navigate("/profile")
+                }
+    
+               
+            } catch (err) {
+                setSuccess("")
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        } 
+
+        
     };
 
    
@@ -271,7 +306,13 @@ const LoginPage = () => {
                             <option value="">Select your role</option>
                             <option value="Doctor">Doctor</option>
                             <option value="Patient">Patient</option>
+                            <option value="Nurse">Nurse</option>
+                            <option value="Receptionist">Receptionist</option>
+                            <option value="AI Specialist">AI Specialist</option>
+                            <option value="Manager">Manager</option>
+                            <option value="Insurance Coordinator">Insurance Coordinator</option>
                             <option value="Lab Technician">Lab Technician</option>
+                            <option value="Pharmacist">Pharmacist</option>
                         </select>
                     </div>
 

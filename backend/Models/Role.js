@@ -4,18 +4,19 @@ const mongoose = require("mongoose");
 const roleSchema = new mongoose.Schema({
   roleName: {
     type: String,
-    enum: [
-      "Patient",
-      "Doctor",
-      "Nurse",
-      "Pharmacist",
-      "LabTechnician"
-    ],
     required: true
   },
   permissions: {
     type: [String],
     default: []
+  },
+  initial: {
+    type: Boolean,
+    default: false
+  },
+  duplicate: {
+    type: Boolean,
+    default: true
   },
   createdAt: {
     type: Date,

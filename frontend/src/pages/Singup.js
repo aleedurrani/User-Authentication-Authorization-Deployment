@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaGoogle} from 'react-icons/fa';
+import { FaGoogle } from 'react-icons/fa';
 import { initializeApp } from "firebase/app";
 import { useNavigate } from "react-router-dom";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
@@ -172,8 +172,8 @@ const SignupPage = () => {
                     }),
                 });
                 if (response2.status === 400) {
-                setStep(1);
-                setError("You already have an account through manual Signup. Please login manually.")
+                    setStep(1);
+                    setError("You already have an account through manual Signup. Please login manually.")
                 }
                 else if (response2.status === 200) {
                     const responseData = await response2.json();
@@ -334,10 +334,16 @@ const SignupPage = () => {
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             required
                                         >
-                                            <option value="">Select Role</option>
+                                            <option value="">Select your role</option>
                                             <option value="Doctor">Doctor</option>
                                             <option value="Patient">Patient</option>
+                                            <option value="Nurse">Nurse</option>
+                                            <option value="Receptionist">Receptionist</option>
+                                            <option value="AI Specialist">AI Specialist</option>
+                                            <option value="Manager">Manager</option>
+                                            <option value="Insurance Coordinator">Insurance Coordinator</option>
                                             <option value="Lab Technician">Lab Technician</option>
+                                            <option value="Pharmacist">Pharmacist</option>
                                         </select>
                                         <span className="absolute right-3 top-2 text-gray-400 cursor-pointer">?</span>
                                     </div>
@@ -420,7 +426,13 @@ const SignupPage = () => {
                             <option value="">Select your role</option>
                             <option value="Doctor">Doctor</option>
                             <option value="Patient">Patient</option>
+                            <option value="Nurse">Nurse</option>
+                            <option value="Receptionist">Receptionist</option>
+                            <option value="AI Specialist">AI Specialist</option>
+                            <option value="Manager">Manager</option>
+                            <option value="Insurance Coordinator">Insurance Coordinator</option>
                             <option value="Lab Technician">Lab Technician</option>
+                            <option value="Pharmacist">Pharmacist</option>
                         </select>
                     </div>
 

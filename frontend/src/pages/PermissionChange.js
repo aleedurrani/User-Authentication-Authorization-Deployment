@@ -6,33 +6,27 @@ import {
   Shield,
   ArrowRight,
   CheckCircle,
-  Plus
+  Plus,
+  XCircle,
+  ChevronRight,
+  ChevronLeft as ChevronLeftIcon
 } from 'lucide-react';
 
 const PermissionChangeRequest = () => {
   const [currentPermissions, setCurrentPermissions] = useState([]);
   const [selectedPermissions, setSelectedPermissions] = useState([]);
+  const [availablePermissions, setAvailablePermissions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const permissionsPerPage = 6;
+
   const navigate = useNavigate();
 
-  // Available permissions - in practice, fetch this from your API
-  const availablePermissions = [
-    'view_patient_data',
-    'update_patient_records',
-    'add_patient_records',
-    'delete_patient_records',
-    'manage_appointments',
-    'access_lab_results',
-    'prescribe_medication',
-    'view_billing_info'
-  ];
-
   useEffect(() => {
-    // Simulate fetching current permissions
-    // Replace with actual API call
-    const fetchUserPermissions = async () => {
+    const fetchPermissions = async () => {
       try {
-        const response = await fetch(
+        // Fetch user profile
+        const profileResponse = await fetch(
           "http://localhost:3001/auth/getProfile",
           {
             method: "POST",
@@ -43,19 +37,47 @@ const PermissionChangeRequest = () => {
           }
         );
 
-        if (!response.ok) {
+        if (!profileResponse.ok) {
           throw new Error("Failed to fetch user data");
         }
 
-        const userData = await response.json();
+        const userData = await profileResponse.json();
         setCurrentPermissions(userData.permissions || []);
+
+        // Fetch available permissions dynamically
+        const availablePermissionsResponse = await fetch(
+          "http://localhost:3001/auth/getAvailablePermissions",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              token: localStorage.getItem("token"),
+            },
+          }
+        );
+
+        if (!availablePermissionsResponse.ok) {
+          throw new Error("Failed to fetch available permissions");
+        }
+
+        const permissionsData = await availablePermissionsResponse.json();
+        
+        // Flatten the available role permissions
+        const flattenedPermissions = permissionsData.availableRolePermissions.flat();
+        
+        // Remove duplicates and permissions already held
+        const uniqueAvailablePermissions = [...new Set(flattenedPermissions)]
+          .filter(permission => !currentPermissions.includes(permission));
+
+        setAvailablePermissions(uniqueAvailablePermissions);
+
       } catch (error) {
-        console.error(error);
+        console.error("Error fetching permissions:", error);
       }
     };
 
-    fetchUserPermissions();
-  }, []);
+    fetchPermissions();
+  }, [currentPermissions]);
 
   const handlePermissionToggle = (permission) => {
     setSelectedPermissions(prev => 
@@ -64,6 +86,16 @@ const PermissionChangeRequest = () => {
         : [...prev, permission]
     );
   };
+
+  // Pagination calculations
+  const indexOfLastPermission = currentPage * permissionsPerPage;
+  const indexOfFirstPermission = indexOfLastPermission - permissionsPerPage;
+  const currentPermissionSet = availablePermissions.slice(
+    indexOfFirstPermission, 
+    indexOfLastPermission
+  );
+
+  const totalPages = Math.ceil(availablePermissions.length / permissionsPerPage);
 
   const handleSubmit = async () => {
     setIsLoading(true);
@@ -91,6 +123,34 @@ const PermissionChangeRequest = () => {
       .split('_')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
+  };
+
+  const renderPagination = () => {
+    return (
+      <div className="flex justify-center items-center space-x-2 mt-6">
+      
+        <button
+          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+          disabled={currentPage === 1}
+          className="p-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+        >
+          <ChevronLeftIcon className="w-5 h-5 text-gray-600" />
+        </button>
+        
+        <span className="text-sm text-gray-700 px-4">
+          Page {currentPage} of {totalPages}
+        </span>
+        
+        <button
+          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+          disabled={currentPage === totalPages}
+          className="p-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+        >
+          <ChevronRight className="w-5 h-5 text-gray-600" />
+        </button>
+        
+      </div>
+    );
   };
 
   return (
@@ -144,32 +204,49 @@ const PermissionChangeRequest = () => {
               <h2 className="text-lg font-medium text-gray-900">Request New Permissions</h2>
             </div>
             <div className="pl-9">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {availablePermissions
-                  .filter(permission => !currentPermissions.includes(permission))
-                  .map((permission, index) => (
-                    <div
-                      key={index}
-                      onClick={() => handlePermissionToggle(permission)}
-                      className={`cursor-pointer p-4 rounded-lg border-2 transition-all duration-200 ${
-                        selectedPermissions.includes(permission)
-                          ? 'border-indigo-500 bg-indigo-50'
-                          : 'border-gray-200 hover:border-indigo-200'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-900">
-                          {formatPermissionName(permission)}
-                        </span>
-                        {selectedPermissions.includes(permission) ? (
-                          <CheckCircle className="w-5 h-5 text-indigo-600" />
-                        ) : (
-                          <Plus className="w-5 h-5 text-gray-400" />
-                        )}
+              {availablePermissions.length > 0 ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {currentPermissionSet.map((permission, index) => (
+                      <div
+                        key={index}
+                        onClick={() => handlePermissionToggle(permission)}
+                        className={`cursor-pointer p-4 rounded-lg border-2 transition-all duration-200 ${
+                          selectedPermissions.includes(permission)
+                            ? 'border-indigo-500 bg-indigo-50'
+                            : 'border-gray-200 hover:border-indigo-200'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-gray-900">
+                            {formatPermissionName(permission)}
+                          </span>
+                          {selectedPermissions.includes(permission) ? (
+                            <CheckCircle className="w-5 h-5 text-indigo-600" />
+                          ) : (
+                            <Plus className="w-5 h-5 text-gray-400" />
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                  
+                  {/* Pagination Component */}
+                  {renderPagination()}
+                </>
+              ) : (
+                <div className="bg-white pr-16 p-8  text-center">
+                <div className="flex justify-center mb-6">
+                  <XCircle className="w-16 h-16 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-1">
+                  No New Permissions Available
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  You have acquired maximum permissions.
+                </p>
               </div>
+              )}
             </div>
           </div>
 

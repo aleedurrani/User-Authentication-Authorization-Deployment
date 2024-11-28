@@ -2,10 +2,12 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { format } = require('date-fns');
 const User = require('../Models/User')
+const Admin = require('../Models/Admin')
 const Request = require('../Models/Request')
 const Role = require('../Models/Role')
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
+const { permission } = require("process");
 
 const generateToken = (user) => {
   const payload = {
@@ -42,6 +44,17 @@ let RegisterUser = async (req, res) => {
     if (req.body.Password && req.body.FirstName && req.body.LastName && req.body.Role) {
     const salt = await bcrypt.genSalt(10);
     const hashedPass = await bcrypt.hash(req.body.Password, salt);
+
+    const roleFound = await Role.findOne({ 
+      roleName: req.body.Role, 
+      initial: true, 
+      duplicate: false 
+    });
+
+    if (!roleFound) {
+      return res.status(404).json({ message: `Role "${req.body.Role}" is not available or invalid.` });
+    }
+
     // Create a new request entry
     const newRequest = new Request({
       requestType: 'signup',
@@ -50,6 +63,7 @@ let RegisterUser = async (req, res) => {
         password: hashedPass,
         name: req.body.FirstName + " " + req.body.LastName,
         role: req.body.Role,
+        permissions: roleFound.permissions
       },
         // Pass the role from the request
       status: 'pending',  
@@ -75,6 +89,19 @@ let RegisterUserGoogle = async (req, res) => {
     const randomPassword = crypto.randomBytes(8).toString('hex'); 
     const salt = await bcrypt.genSalt(10); 
     const hashedPass = await bcrypt.hash(randomPassword, salt); 
+
+
+    const roleFound = await Role.findOne({ 
+      roleName: req.body.Role, 
+      initial: true, 
+      duplicate: false 
+    });
+
+
+    if (!roleFound) {
+      return res.status(404).json({ message: `Role "${req.body.Role}" is not available or invalid.` });
+    }
+
     // Create a new request entry
 
     const newRequest = new Request({
@@ -84,6 +111,7 @@ let RegisterUserGoogle = async (req, res) => {
         password: hashedPass,
         name: req.body.FirstName + " " + req.body.LastName,
         role: req.body.Role,
+        permissions: roleFound.permissions
       },
         // Pass the role from the request
       status: 'pending',  
@@ -258,6 +286,7 @@ let LoginUser = async (req, res) => {
 
 
 
+
 let LoginGoogle = async (req, res) => {
   try {
     const { email, googleId} = req.body;
@@ -290,7 +319,7 @@ let LoginGoogle = async (req, res) => {
 let GetUserProfile = async (req,res) =>{
 
   const userId = res.locals.userId; 
-  const roleId = res.locals.userrole
+  const roleIds = res.locals.userrole
    
   try {
     const userProfile = await User.findById(userId);
@@ -299,21 +328,26 @@ let GetUserProfile = async (req,res) =>{
       return res.status(404).json({ message: 'User profile not found' });
     }
 
-    const role = await Role.findById(roleId);
+
+    const roles = await Role.find({ _id: { $in: roleIds } });
+
     
-    if (!role) {
-      return res.status(405).json({ message: 'Role not found' });
+
+    if (!roles || roles.length === 0) {
+      return res.status(405).json({ message: 'No roles found' });
     }
+
+    const roleNames = roles.map((role) => role.roleName);
   
     const memberSince = format(new Date(userProfile.createdAt), 'MMMM dd, yyyy');
 
 
     res.status(200).json({
-      name: userProfile.name,
+    name: userProfile.name,
     email: userProfile.email,
     status: userProfile.status,
-    role: role.roleName,
-    permissions: role.permissions,
+    role: roleNames,
+    permissions: roles.flatMap((role) => role.permissions),
     joined: memberSince
 
     });
@@ -324,6 +358,92 @@ let GetUserProfile = async (req,res) =>{
 }
 
 
+const GetAvailableRoles = async (req, res) => {
+  const roleIds = res.locals.userrole; // Array of role IDs
+
+  if (!roleIds || roleIds.length === 0) {
+    return res.status(400).json({ message: 'User roles not found' });
+  }
+
+  try {
+    // Fetch role names based on the role IDs
+    const roles = await Role.find({ _id: { $in: roleIds } });
+
+    if (roles.length === 0) {
+      return res.status(404).json({ message: 'Roles not found' });
+    }
+
+    // Extract the first word of the first role's name
+    const firstRolePrefix = roles[0].roleName.split(' ')[0]; // Split and take the first word
+
+    // Find all other roles that match the prefix, excluding the roles the user already has
+    const availableRoles = await Role.find({
+      roleName: { $regex: `^${firstRolePrefix}`, $options: 'i' }, // Match roles starting with the prefix
+      _id: { $nin: roleIds }, // Exclude roles already assigned to the user
+      initial: true,
+      duplicate: false
+    });
+
+    if (availableRoles.length === 0) {
+      return res.status(404).json({ message: 'No available roles found' });
+    }
+
+    // Map the roles with their permissions
+    const rolesWithPermissions = availableRoles.map((role) => ({
+      roleName: role.roleName,
+      permissions: role.permissions,
+    }));
+
+    res.status(200).json({ availableRoles: rolesWithPermissions });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
+
+const GetAvailablePermissions = async (req, res) => {
+  const roleIds = res.locals.userrole; // Array of role IDs
+
+  if (!roleIds || roleIds.length === 0) {
+    return res.status(400).json({ message: 'User roles not found' });
+  }
+
+  try {
+    // Fetch role names based on the role IDs
+    const roles = await Role.find({ _id: { $in: roleIds } });
+
+    if (roles.length === 0) {
+      return res.status(404).json({ message: 'Roles not found' });
+    }
+
+    // Extract the first word of the first role's name
+    const firstRolePrefix = roles[0].roleName.split(' ')[0]; // Split and take the first word
+
+    // Find all other roles that match the prefix, excluding the roles the user already has
+    const availableRoles = await Role.find({
+      roleName: { $regex: `^${firstRolePrefix}`, $options: 'i' }, // Match roles starting with the prefix
+      _id: { $nin: roleIds }, // Exclude roles already assigned to the user
+      initial: true,
+    });
+
+    if (availableRoles.length === 0) {
+      return res.status(404).json({ message: 'No available roles found' });
+    }
+
+    // Map the roles to return only the permissions
+    const rolePermissions = availableRoles.map((role) => role.permissions);
+
+    res.status(200).json({ availableRolePermissions: rolePermissions });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
+
+
+
 
 const ProtectedRoute = async (req, res) =>{
   const { userId } = req.body; // Expecting userId from the request body
@@ -331,12 +451,19 @@ const ProtectedRoute = async (req, res) =>{
 
   // Check if the IDs match
   if (decodedUserId === userId) {
-    return res.status(200).json({ message: 'Token is valid', userId: decodedUserId, userFullName: res.locals.userFullName });
+    const user = await User.findById(decodedUserId);
+    if (user) {
+      return res.status(200).json({ 
+        message: 'Token is valid', 
+        userId: decodedUserId, 
+        userFullName: res.locals.userFullName 
+      });
+    }
+    return res.status(404).json('User not found');
   } else {
     return res.status(401).json('Access denied: Invalid user ID');
   }
 };
-
 
 
 
@@ -367,7 +494,7 @@ const GetRequests = async (req, res) => {
 
 const RoleChange = async (req, res) => {
   const userId = res.locals.userId; 
-  const roleId = res.locals.userrole
+  const roleIds = res.locals.userrole
 
   try {
     const userProfile = await User.findById(userId);
@@ -376,18 +503,43 @@ const RoleChange = async (req, res) => {
       return res.status(404).json({ message: 'User profile not found' });
     }
 
-    const role = await Role.findById(roleId);
+    const roles = await Role.find({ _id: { $in: roleIds } });
     
-    if (!role) {
-      return res.status(405).json({ message: 'Role not found' });
+    if (roles.length === 0) {
+      return res.status(404).json({ message: 'Roles not found' });
+    }
+
+    const currentRoles = await Role.find({
+      _id: { $in: roleIds }, 
+    });
+
+    if (currentRoles.length === 0) {
+      return res.status(404).json({ message: 'No available roles found' });
+    }
+
+    // Map the roles to return only the permissions
+    const currentPermissions = currentRoles.flatMap((role) => role.permissions);
+    const currentRoleNames = currentRoles.map((role) => role.roleName); 
+    
+
+    const newRole = await Role.findOne({ 
+      roleName: req.body.newRole, 
+      initial: true, 
+      duplicate: false 
+    });
+
+    if (!newRole) {
+      return res.status(404).json({ message: `Role "${req.body.newRole}" is not available or invalid.` });
     }
 
     const newRequest = new Request({
       requestType: 'role change',
       requestData: {
         email: userProfile.email,
-        role: role.roleName,
-        newRole: req.body.newRole
+        roles: currentRoleNames,
+        newRole: req.body.newRole,
+        permissions: newRole.permissions,
+        currentPermissions: currentPermissions
       },
         // Pass the role from the request
       status: 'pending',  
@@ -401,6 +553,7 @@ const RoleChange = async (req, res) => {
     res.status(200).json({ message: 'User profile not found' });
 
   } catch (error) {
+    
     res.status(500).json({ message: 'Internal Server Error', error: error.message });
   }
 };
@@ -408,7 +561,7 @@ const RoleChange = async (req, res) => {
 
 const PermissionChange = async (req, res) => {
   const userId = res.locals.userId; 
-  
+  const roleIds = res.locals.userrole
 
   try {
     // Fetch user profile
@@ -418,7 +571,23 @@ const PermissionChange = async (req, res) => {
       return res.status(404).json({ message: 'User profile not found' });
     }
 
-  
+    const roles = await Role.find({ _id: { $in: roleIds } });
+    
+    if (roles.length === 0) {
+      return res.status(404).json({ message: 'Roles not found' });
+    }
+
+    const currentRoles = await Role.find({
+      _id: { $in: roleIds }, 
+    });
+
+    if (currentRoles.length === 0) {
+      return res.status(404).json({ message: 'No available roles found' });
+    }
+
+    // Map the roles to return only the permissions
+    const currentPermissions = currentRoles.flatMap((role) => role.permissions);
+    const currentRoleNames = currentRoles.map((role) => role.roleName); 
 
     const { newPermissions } = req.body;
 
@@ -433,6 +602,8 @@ const PermissionChange = async (req, res) => {
       requestData: {
         email: userProfile.email,
         permissions: newPermissions,
+        currentPermissions: currentPermissions,
+        roles: currentRoleNames
       },
       status: 'pending',
     });
@@ -449,4 +620,18 @@ const PermissionChange = async (req, res) => {
 
 
 
-module.exports = { RegisterUser, LoginUser, VerifyEmail, RegisterUserGoogle, LoginGoogle, GetUserProfile, ProtectedRoute, GetRequests, RoleChange, PermissionChange, VerifyUserCredentials, UpdateUserPassword}
+module.exports = { RegisterUser, 
+  LoginUser, 
+  VerifyEmail,
+   RegisterUserGoogle,
+    LoginGoogle, 
+    GetUserProfile, 
+    ProtectedRoute, 
+    GetRequests, 
+    RoleChange, 
+    PermissionChange,
+     VerifyUserCredentials, 
+     UpdateUserPassword,
+     GetAvailableRoles,
+     GetAvailablePermissions,
+    }

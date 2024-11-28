@@ -11,7 +11,8 @@ import {
     Inbox,
     CheckCircle,
     XCircle,
-    AlertCircle
+    AlertCircle,
+    UserIcon
 } from 'lucide-react';
 
 const UserRequests = () => {
@@ -95,6 +96,68 @@ const UserRequests = () => {
             : request.requestType === 'permission change'
     );
 
+    
+  const RoleDisplay = React.memo(({ roles }) => {
+    // If roles exist and are not empty
+    if (!roles || roles.length === 0) return null;
+
+    return (
+      <div className="space-y-2">
+        <div className="flex flex-wrap gap-2">
+          {roles.map((role, index) => (
+            <div 
+              key={index} 
+              className="
+                group 
+                relative 
+                inline-flex 
+                items-center 
+                px-3 
+                py-1 
+                rounded-full 
+                bg-indigo-50 
+                text-indigo-700 
+                text-xs 
+                font-semibold 
+                hover:bg-indigo-100 
+                transition-all 
+                duration-300 
+                cursor-default
+                shadow-sm
+                hover:shadow-md
+              "
+            >
+              <UserIcon className="mr-1.5 h-3.5 w-3.5 text-indigo-500 group-hover:scale-110 transition-transform" />
+              {role}
+              <div 
+                className="
+                  absolute 
+                  -top-1 
+                  -right-1 
+                  h-4 
+                  w-4 
+                  bg-indigo-500 
+                  text-white 
+                  rounded-full 
+                  flex 
+                  items-center 
+                  justify-center 
+                  text-[0.6rem] 
+                  opacity-0 
+                  group-hover:opacity-100 
+                  transition-opacity 
+                  duration-300
+                "
+              >
+                {index + 1}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  });
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
             {/* Header */}
@@ -146,7 +209,7 @@ const UserRequests = () => {
                                         className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-indigo-50 transition-colors duration-200"
                                     >
                                         <UserCircle className="w-4 h-4 mr-3 text-indigo-600" />
-                                        Role Change Request
+                                        Acquiring Role Request
                                     </button>
                                     <button
                                         onClick={() => handleCreateRequest('permission')}
@@ -169,7 +232,7 @@ const UserRequests = () => {
                                 }`}
                         >
                             <UserCircle className={`w-4 h-4 mr-2 ${activeTab === 'role' ? 'text-white' : 'text-gray-400'}`} />
-                            Role Changes
+                            Acquiring Role
                         </button>
                         <button
                             onClick={() => setActiveTab('permission')}
@@ -247,10 +310,10 @@ const UserRequests = () => {
                                                                     <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
                                                                         <div className="flex items-center mb-2">
                                                                             <UserCircle className="w-4 h-4 text-gray-400 mr-2" />
-                                                                            <span className="text-gray-600 font-medium">Existing Role</span>
+                                                                            <span className="text-gray-600 font-medium">Existing Role (s)</span>
                                                                         </div>
                                                                         <span className="text-indigo-600 font-semibold">
-                                                                            {request.requestData.role.charAt(0).toUpperCase() + request.requestData.role.slice(1)}
+                                                                           <RoleDisplay roles={request.requestData.roles} /> 
                                                                         </span>
                                                                     </div>
                                                                     <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">

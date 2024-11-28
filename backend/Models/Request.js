@@ -18,7 +18,11 @@ const RequestSchema = new mongoose.Schema({
     },
     role: { 
       type: String, 
-      required: function() { return this.requestType === 'signup' || this.requestType === 'role change'; }  // Required for signup and role change
+      required: function() { return this.requestType === 'signup'}  // Required for signup and role change
+    },
+    roles: { 
+      type: [String], 
+      required: function() { return this.requestType === 'role change' || this.requestType === 'permission change' }  // Required for signup and role change
     },
     newRole: { 
       type: String, 
@@ -26,8 +30,13 @@ const RequestSchema = new mongoose.Schema({
     },
     permissions: {
       type: [String],  // Array of permissions
-      required: function() { return this.requestType === 'permission change'; }  // Required only for permission change
+      required: function() { return this.requestType === 'permission change' || this.requestType === 'role change' || this.requestType === 'signup' }  // Required only for permission change
     },
+    currentPermissions: {
+      type: [String],  // Array of permissions
+      required: function() { return this.requestType === 'permission change' || this.requestType === 'role change'; }  // Required only for permission change
+    },
+    
   },
   googleId: { 
     type: String, 
