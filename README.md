@@ -24,7 +24,12 @@ These instructions will help you set up and run the project on your local machin
    npm install
    ```
 
-3. Start the backend server:
+3. Create Admin:
+   ```
+   npm run create-admin
+   ```
+
+4. Start the backend server:
    ```
    node app.js
    ```
