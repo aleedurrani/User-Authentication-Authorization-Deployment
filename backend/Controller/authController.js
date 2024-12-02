@@ -118,7 +118,9 @@ let VerifyEmail = async (req, res) => {
         console.error('Error sending email:', error); 
         return res.status(401).json({ message: "Error sending email", error: error.message });
       }
-      res.status(200).json({ message: "PIN sent to your email", pin: pin });
+      res.status(200).json({ message: "PIN sent to your email" });
+      console.log("Email sent: " + info.response);
+      console.log("PIN: " + pin);
     });
   } catch (err) {
     console.error(err);
@@ -179,16 +181,16 @@ let LoginUser = async (req, res) => {
 
 let LoginGoogle = async (req, res) => {
   try {
-    const { email, googleId} = req.body;
+    const { email, googleId } = req.body;
 
-    const user = await User.findOne({ email: email});
+    const user = await User.findOne({ email: email });
 
-    const id = user.googleId;
-    
+    if (!user) {
+      return res.status(404).json("User not found");
+    }
 
-    if (id){
+    if (user.googleId) {
       const token = generateToken(user);
-    
       res.status(200).json({
         token,  
         user: {
@@ -199,17 +201,16 @@ let LoginGoogle = async (req, res) => {
     } else {
       res.status(400).json("Login Manually");
     }
-
   } catch (error) {
-    res.status(500).json({ message: 'Authentication failed'});
+    console.error(error);
+    res.status(500).json("Internal server error");
   }
 };
 
-let GetUserProfile = async (req,res) =>{
-
+let GetUserProfile = async (req, res) => {
   const userId = res.locals.userId; 
-  const roleId = res.locals.userrole
-   
+  const userRole = res.locals.userrole; // Rename for clarity
+
   try {
     const userProfile = await User.findById(userId);
 
@@ -217,41 +218,41 @@ let GetUserProfile = async (req,res) =>{
       return res.status(404).json({ message: 'User profile not found' });
     }
 
-    const role = await Role.findOne({ roleName: userrole });
+    const role = await Role.findOne({ roleName: userRole }); // Use renamed variable
 
-    
     if (!role) {
       return res.status(405).json({ message: 'Role not found' });
     }
-  
-    const memberSince = format(new Date(userProfile.createdAt), 'MMMM dd, yyyy');
 
+    const memberSince = format(new Date(userProfile.createdAt), 'MMMM dd, yyyy');
 
     res.status(200).json({
       name: userProfile.name,
-    email: userProfile.email,
-    status: userProfile.status,
-    role: role.roleName,
-    permissions: role.permissions,
-    joined: memberSince
-
+      email: userProfile.email,
+      status: userProfile.status,
+      role: role.roleName,
+      permissions: role.permissions,
+      joined: memberSince
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
-}
+};
 
+const ProtectedRoute = async (req, res) => {
+  const userId = res.locals.userId;
 
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
-const ProtectedRoute = async (req, res) =>{
-  const { userId } = req.body; 
-  const decodedUserId = res.locals.userId;
-
-  if (decodedUserId === userId) {
-    return res.status(200).json({ message: 'Token is valid', userId: decodedUserId, userFullName: res.locals.userFullName });
-  } else {
-    return res.status(401).json('Access denied: Invalid user ID');
+    res.status(200).json({ message: 'Access granted', user });
+  } catch (error) {
+    console.error('Error in ProtectedRoute:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 };
 

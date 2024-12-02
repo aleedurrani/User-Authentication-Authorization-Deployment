@@ -4,14 +4,15 @@ import { initializeApp } from "firebase/app";
 import { useNavigate } from "react-router-dom";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCaUh1JJX3EbZLI_-3AQKguNx81VLIbgY4",
-    authDomain: "healthcaresystem-ffac8.firebaseapp.com",
-    projectId: "healthcaresystem-ffac8",
-    storageBucket: "healthcaresystem-ffac8.firebasestorage.app",
-    messagingSenderId: "70847912770",
-    appId: "1:70847912770:web:d37eba6eabd8916ebc06db"
+    apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+    authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.REACT_APP_FIREBASE_APP_ID
 };
 
 const app = initializeApp(firebaseConfig);
@@ -42,7 +43,7 @@ const SignupPage = () => {
         if (step === 1) {
             console.log("hi")
             try {
-                const response = await fetch('http://localhost:3001/auth/register', {
+                const response = await fetch(`${API_BASE_URL}/auth/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ Email: email }),
@@ -58,7 +59,7 @@ const SignupPage = () => {
                 else {
                     try {
                         setSuccess('Wait for a few seconds...');
-                        const response = await fetch('http://localhost:3001/auth/verifyEmail', {
+                        const response = await fetch(`${API_BASE_URL}/auth/verifyEmail`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ Email: email }),
@@ -96,7 +97,7 @@ const SignupPage = () => {
                 };
 
                 try {
-                    const response = await fetch('http://localhost:3001/auth/register', {
+                    const response = await fetch(`${API_BASE_URL}/auth/register`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -147,7 +148,7 @@ const SignupPage = () => {
 
             const user = result.user;
 
-            const response = await fetch("http://localhost:3001/auth/register", {
+            const response = await fetch(`${API_BASE_URL}/auth/register`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -157,7 +158,7 @@ const SignupPage = () => {
                 }),
             });
             if (response.status === 400) {
-                const response2 = await fetch("http://localhost:3001/auth/loginGoogle", {
+                const response2 = await fetch(`${API_BASE_URL}/auth/loginGoogle`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -213,7 +214,7 @@ const SignupPage = () => {
             setIsRoleModalOpen(false);
 
             try {
-                const response = await fetch("http://localhost:3001/auth/registerGoogle", {
+                const response = await fetch(`${API_BASE_URL}/auth/registerGoogle`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",

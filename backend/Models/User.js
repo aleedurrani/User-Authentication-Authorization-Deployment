@@ -29,6 +29,10 @@ const userSchema = new mongoose.Schema(
     googleId: { 
       type: String, 
     },
+    permissions: {
+      type: [String],
+      default: [],
+    },
     createdAt: {
       type: Date,
       default: Date.now,

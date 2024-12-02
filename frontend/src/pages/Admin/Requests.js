@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import AdminRoute from '../../components/AdminRoutes';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
 
 const Requests = () => {
   const [requests, setRequests] = useState([]);
@@ -23,7 +25,7 @@ const Requests = () => {
   const fetchRoles = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3001/auth/admin/permissions', {
+      const response = await fetch(`${API_BASE_URL}/auth/admin/permissions`, {
         headers: {
           'Content-Type': 'application/json',
           token: token,
@@ -46,7 +48,7 @@ const Requests = () => {
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3001/auth/admin/requests', {
+      const response = await fetch(`${API_BASE_URL}/auth/admin/requests`, {
         headers: {
           'Content-Type': 'application/json',
           token: token,
@@ -87,7 +89,7 @@ const Requests = () => {
     setActionMessage('');
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3001/auth/admin/requests/${id}/approve`, {
+      const response = await fetch(`${API_BASE_URL}/auth/admin/requests/${id}/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -111,7 +113,7 @@ const Requests = () => {
     setActionMessage('');
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3001/auth/admin/requests/${id}/reject`, {
+      const response = await fetch(`${API_BASE_URL}/auth/admin/requests/${id}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

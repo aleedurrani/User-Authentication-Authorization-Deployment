@@ -31,15 +31,23 @@ const approveRequest = async (req, res) => {
             return res.status(400).json({ message: 'Requested role does not exist.' });
         }
 
-        const newUser = new User({
+        const userData = {
             email,
             name,
             passwordHash: password,
             role,
+            permissions: roleData.permissions,
             status: 'active',
             createdAt: new Date(),
             updatedAt: new Date(),
-        });
+        };
+
+        let newUser;
+        if (role === 'Admin') {
+            newUser = new Admin(userData);
+        } else {
+            newUser = new User(userData);
+        }
 
         await newUser.save();
 
@@ -116,7 +124,6 @@ const searchUserByEmail = async (req, res) => {
       res.status(500).json({ message: 'Internal Server Error' });
     }
 };
-
 
 const getUserDetails = async (req, res) => {
     const { id } = req.params;
@@ -224,4 +231,4 @@ module.exports = {
     updateUserPermissions,
     updateUserRoleAndStatus,
     getAllPermissions
-};  
+};

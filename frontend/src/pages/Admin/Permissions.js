@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import SearchBar from '../../components/SearchBar';
 import UserDetails from '../../components/UserDetails';
 import PermissionsList from '../../components/PermissionsList';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const Permissions = () => {
   const [searchEmail, setSearchEmail] = useState('');
@@ -15,7 +16,7 @@ const Permissions = () => {
     const fetchPermissions = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:3001/auth/admin/permissions', {
+        const response = await fetch(`${API_BASE_URL}/auth/admin/permissions`, {
           headers: {
             'Content-Type': 'application/json',
             token: token,
@@ -49,7 +50,7 @@ const Permissions = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3001/auth/admin/users?email=${searchEmail}`, {
+      const response = await fetch(`${API_BASE_URL}/auth/admin/users?email=${searchEmail}`, {
         headers: {
           'Content-Type': 'application/json',
           token: token,
@@ -91,7 +92,7 @@ const Permissions = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3001/auth/admin/users/${user._id}/permissions`, {
+      const response = await fetch(`${API_BASE_URL}/auth/admin/users/${user._id}/permissions`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

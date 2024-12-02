@@ -4,14 +4,15 @@ import { initializeApp } from "firebase/app";
 import { useNavigate } from "react-router-dom";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCaUh1JJX3EbZLI_-3AQKguNx81VLIbgY4",
-    authDomain: "healthcaresystem-ffac8.firebaseapp.com",
-    projectId: "healthcaresystem-ffac8",
-    storageBucket: "healthcaresystem-ffac8.firebasestorage.app",
-    messagingSenderId: "70847912770",
-    appId: "1:70847912770:web:d37eba6eabd8916ebc06db"
+    apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+    authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.REACT_APP_FIREBASE_APP_ID
 };
 
 const app = initializeApp(firebaseConfig);
@@ -42,7 +43,7 @@ const LoginPage = () => {
         };
 
         try {
-            const response = await fetch("http://localhost:3001/auth/login", {
+            const response = await fetch(`${API_BASE_URL}/auth/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -63,7 +64,6 @@ const LoginPage = () => {
                 navigate("/profile")
             }
 
-           
         } catch (err) {
             setSuccess("")
             setError(err.message);
@@ -72,14 +72,14 @@ const LoginPage = () => {
         }
     };
 
-   
+
     const handleGoogleAuth = async () => {
         try {
             const result = await signInWithPopup(auth, provider);
 
             const user = result.user;
 
-            const response = await fetch("http://localhost:3001/auth/register", {
+            const response = await fetch(`${API_BASE_URL}/auth/register`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -89,7 +89,7 @@ const LoginPage = () => {
                 }),
             });
             if (response.status === 400) {
-                const response2 = await fetch("http://localhost:3001/auth/loginGoogle", {
+                const response2 = await fetch(`${API_BASE_URL}/auth/loginGoogle`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -100,7 +100,7 @@ const LoginPage = () => {
                     }),
                 });
                 if (response2.status === 400) {
-                setError("You already have an account through mauual Signup. Please Login Manually")
+                    setError("You already have an account through manual Signup. Please Login Manually");
                 }
                 else if (response2.status === 200) {
                     const responseData = await response2.json();
@@ -129,14 +129,14 @@ const LoginPage = () => {
         }
     };
 
-    
+
     const handleRoleSubmit = async () => {
         if (role) {
             setRole(role);
             setIsRoleModalOpen(false);
 
             try {
-                const response = await fetch("http://localhost:3001/auth/registerGoogle", {
+                const response = await fetch(`${API_BASE_URL}/auth/registerGoogle`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -245,51 +245,53 @@ const LoginPage = () => {
                     </a>
                 </div>
             </div>
-            {isRoleModalOpen && (<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-xl font-semibold">Select Your Role</h2>
-                        <button
-                            onClick={() => setIsRoleModalOpen(false)}
-                            className="text-gray-500 hover:text-gray-700"
-                        >
-                            ×
-                        </button>
-                    </div>
+            {isRoleModalOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 w-full max-w-md">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-semibold">Select Your Role</h2>
+                            <button
+                                onClick={() => setIsRoleModalOpen(false)}
+                                className="text-gray-500 hover:text-gray-700"
+                            >
+                                ×
+                            </button>
+                        </div>
 
-                    <div className="mb-6">
-                        <select
-                            value={role}
-                            onChange={(e) => setRole(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="">Select your role</option>
-                            <option value="Doctor">Doctor</option>
-                            <option value="Patient">Patient</option>
-                            <option value="Lab Technician">Lab Technician</option>
-                        </select>
-                    </div>
+                        <div className="mb-6">
+                            <select
+                                value={role}
+                                onChange={(e) => setRole(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="">Select your role</option>
+                                <option value="Doctor">Doctor</option>
+                                <option value="Patient">Patient</option>
+                                <option value="Lab Technician">Lab Technician</option>
+                            </select>
+                        </div>
 
-                    <div className="flex justify-end space-x-3">
-                        <button
-                            onClick={() => setIsRoleModalOpen(false)}
-                            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={handleRoleSubmit}
-                            disabled={!role}
-                            className={`px-4 py-2 rounded-md text-white ${role
-                                ? 'bg-gray-800 hover:bg-gray-700'
-                                : 'bg-gray-400 cursor-not-allowed'
+                        <div className="flex justify-end space-x-3">
+                            <button
+                                onClick={() => setIsRoleModalOpen(false)}
+                                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleRoleSubmit}
+                                disabled={!role}
+                                className={`px-4 py-2 rounded-md text-white ${
+                                    role
+                                        ? 'bg-gray-800 hover:bg-gray-700'
+                                        : 'bg-gray-400 cursor-not-allowed'
                                 }`}
-                        >
-                            Continue
-                        </button>
+                            >
+                                Continue
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
             )}
         </div>
     );

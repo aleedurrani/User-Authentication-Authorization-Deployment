@@ -28,13 +28,11 @@ const {
  router.post('/getProfile', verifyToken, GetUserProfile);
  router.post('/protectedRoute', verifyToken, ProtectedRoute);
 
-
  router.get('/admin/requests', AuthAdmin, getAdminRequests);
  router.post('/admin/requests/:id/approve', AuthAdmin, approveRequest);
  router.post('/admin/requests/:id/reject', AuthAdmin, rejectRequest);
  router.post('/admin/verifyAdmin', verifyToken, verifyAdmin);
  router.get('/admin/roles', AuthAdmin, getAllRoles);
-
  router.get('/admin/users', AuthAdmin, searchUserByEmail);
  router.get('/admin/users/:id', AuthAdmin, getUserDetails);
  router.put('/admin/users/:id/permissions', AuthAdmin, updateUserPermissions);

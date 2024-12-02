@@ -11,6 +11,7 @@ import {
   Clock,
   UserCheck
 } from 'lucide-react';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const UserProfile = () => {
   const [user, setUser] = useState({
@@ -29,7 +30,7 @@ const UserProfile = () => {
     const fetchUserData = async () => {
       try {
         const response = await fetch(
-          "http://localhost:3001/auth/getProfile",
+          `${API_BASE_URL}/auth/getProfile`,
           {
             method: "POST",
             headers: {

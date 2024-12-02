@@ -23,6 +23,11 @@ mongoose
 
 app.use("/auth", authRoute);
 
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
+
 const PORT = process.env.PORT || 3001; 
 app.listen(PORT, () => {
   console.log(`Backend is running on port ${PORT}`);

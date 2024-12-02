@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
-const AdminRoute = ({ element: Component, ...rest }) => {
+const AdminRoute = ({ children }) => {
   const [isAdmin, setIsAdmin] = useState(null); 
 
   useEffect(() => {
@@ -14,7 +15,7 @@ const AdminRoute = ({ element: Component, ...rest }) => {
       }
 
       try {
-        const response = await fetch('http://localhost:3001/auth/admin/verifyAdmin', {
+        const response = await fetch(`${API_BASE_URL}/auth/admin/verifyAdmin`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -40,11 +41,7 @@ const AdminRoute = ({ element: Component, ...rest }) => {
     return <div>Loading...</div>;
   }
 
-  return isAdmin ? (
-    <Component {...rest} />
-  ) : (
-    <Navigate to="/not-authorized" replace />
-  );
+  return isAdmin ? children : <Navigate to="/not-authorized" replace />;
 };
 
 export default AdminRoute;

@@ -8,7 +8,8 @@ const roleSchema = new mongoose.Schema({
       "Doctor",
       "Nurse",
       "Pharmacist",
-      "LabTechnician"
+      "Lab Technician",
+      "Admin",
     ],
     required: true
   },

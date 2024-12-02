@@ -3,6 +3,7 @@ import SearchBar from '../../components/SearchBar';
 import UserDetails from '../../components/UserDetails';
 import RoleSelector from '../../components/RoleSelector';
 import StatusSelector from '../../components/StatusSelector';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const Roles = () => {
   const [searchEmail, setSearchEmail] = useState('');
@@ -20,7 +21,7 @@ const Roles = () => {
       try {
         const token = localStorage.getItem('token');
 
-        const rolesResponse = await fetch('http://localhost:3001/auth/admin/permissions', {
+        const rolesResponse = await fetch(`${API_BASE_URL}/auth/admin/permissions`, {
           headers: {
             'Content-Type': 'application/json',
             token: token,
@@ -64,7 +65,7 @@ const Roles = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3001/auth/admin/users?email=${searchEmail}`, {
+      const response = await fetch(`${API_BASE_URL}/auth/admin/users?email=${searchEmail}`, {
         headers: {
           'Content-Type': 'application/json',
           token: token,
@@ -103,7 +104,7 @@ const Roles = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3001/auth/admin/users/${user._id}/role-status`, {
+      const response = await fetch(`${API_BASE_URL}/auth/admin/users/${user._id}/role-status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

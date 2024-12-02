@@ -1,7 +1,9 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const User = require('./Models/User');
+const Admin = require('./Models/Admin');
 
 const adminEmail = "admin@example.com";
 const adminPass= "adminpassword";
@@ -21,7 +23,7 @@ const createAdmin = async () => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(adminPass, salt);
 
-    const admin = new User({
+    const admin = new Admin({
       email: adminEmail,
       name: 'Admin User',
       passwordHash: hashedPassword,
@@ -39,7 +41,15 @@ const createAdmin = async () => {
     });
 
     await admin.save();
+
+    const token = jwt.sign(
+      { id: admin._id, email: admin.email, role: admin.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
     console.log('Admin user created successfully.');
+    console.log('Token:', token);
   } catch (error) {
     console.error('Error creating admin user:', error);
   } finally {
