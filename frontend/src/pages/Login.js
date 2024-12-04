@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaGoogle } from 'react-icons/fa';
 import { initializeApp } from "firebase/app";
 import { useNavigate } from "react-router-dom";
@@ -31,7 +31,32 @@ const LoginPage = () => {
     const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
     const [success, setSuccess] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [primaryRoles, setPrimaryRoles] = useState([]);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const fetchPrimaryRoles = async () => {
+            try {
+                const response = await fetch('http://localhost:3001/admin/getAllPrimaryRoles', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch primary roles');
+                }
+
+                const data = await response.json();
+                setPrimaryRoles(data);
+            } catch (error) {
+                setError(error.message);
+            }
+        };
+
+        fetchPrimaryRoles();
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -52,7 +77,7 @@ const LoginPage = () => {
                     },
                     body: JSON.stringify(loginData),
                 });
-    
+
                 if (response.status === 400) {
                     throw new Error("Login failed. Please check your credentials.");
                 }
@@ -65,7 +90,7 @@ const LoginPage = () => {
                     localStorage.setItem("userFullName", responseData.user.FullName); // Store full name
                     navigate("/adminProfile")
                 }
-    
+
             } catch (err) {
                 setSuccess("")
                 setError(err.message);
@@ -73,7 +98,7 @@ const LoginPage = () => {
                 setLoading(false);
             }
 
-        } 
+        }
         else {
             try {
                 const response = await fetch("http://localhost:3001/auth/login", {
@@ -83,7 +108,7 @@ const LoginPage = () => {
                     },
                     body: JSON.stringify(loginData),
                 });
-    
+
                 if (response.status === 400) {
                     throw new Error("Login failed. Please check your credentials.");
                 }
@@ -96,20 +121,20 @@ const LoginPage = () => {
                     localStorage.setItem("userFullName", responseData.user.FullName); // Store full name
                     navigate("/profile")
                 }
-    
-               
+
+
             } catch (err) {
                 setSuccess("")
                 setError(err.message);
             } finally {
                 setLoading(false);
             }
-        } 
+        }
 
-        
+
     };
 
-   
+
     const handleGoogleAuth = async () => {
         try {
             const result = await signInWithPopup(auth, provider);
@@ -139,7 +164,7 @@ const LoginPage = () => {
                     }),
                 });
                 if (response2.status === 400) {
-                setError("You have an account through manual Signup. Please login manually.")
+                    setError("You have an account through manual Signup. Please login manually.")
                 }
                 else if (response2.status === 200) {
                     const responseData = await response2.json();
@@ -150,7 +175,7 @@ const LoginPage = () => {
                 }
 
             } else if (response.status === 403) {
-                
+
                 setError("You already have a pending signup request.")
             }
             else {
@@ -168,7 +193,7 @@ const LoginPage = () => {
         }
     };
 
-    
+
     const handleRoleSubmit = async () => {
         if (role) {
             setRole(role);
@@ -224,11 +249,11 @@ const LoginPage = () => {
                 </h2>
                 {error && <p className="text-red-500 text-center mb-4">{error}</p>}
                 {success && (
-                        <p className="mb-4 text-green-500 text-center">
-                            {success}
-                        </p>
-                    )}
-                
+                    <p className="mb-4 text-green-500 text-center">
+                        {success}
+                    </p>
+                )}
+
                 <div className="flex justify-center space-x-4 mb-6">
                     <button
                         onClick={handleGoogleAuth}
@@ -304,15 +329,11 @@ const LoginPage = () => {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="">Select your role</option>
-                            <option value="Doctor">Doctor</option>
-                            <option value="Patient">Patient</option>
-                            <option value="Nurse">Nurse</option>
-                            <option value="Receptionist">Receptionist</option>
-                            <option value="AI Specialist">AI Specialist</option>
-                            <option value="Manager">Manager</option>
-                            <option value="Insurance Coordinator">Insurance Coordinator</option>
-                            <option value="Lab Technician">Lab Technician</option>
-                            <option value="Pharmacist">Pharmacist</option>
+                            {primaryRoles.map(role => (
+                                <option key={role.roleName} value={role.roleName}>
+                                    {role.roleName.charAt(0).toUpperCase() + role.roleName.slice(1)}
+                                </option>
+                            ))}
                         </select>
                     </div>
 

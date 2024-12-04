@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaGoogle } from 'react-icons/fa';
 import { initializeApp } from "firebase/app";
 import { useNavigate } from "react-router-dom";
@@ -33,7 +33,32 @@ const SignupPage = () => {
     const [pin, setPin] = useState(['', '', '', '', '']);
     const [returnedPin, setReturnedPin] = useState("")
     const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+    const [primaryRoles, setPrimaryRoles] = useState([]);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const fetchPrimaryRoles = async () => {
+            try {
+                const response = await fetch('http://localhost:3001/admin/getAllPrimaryRoles', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch primary roles');
+                }
+
+                const data = await response.json();
+                setPrimaryRoles(data);
+            } catch (error) {
+                setError(error.message);
+            }
+        };
+
+        fetchPrimaryRoles();
+    }, []);
 
     const handleSubmit = async (e) => {
         setError(null)
@@ -335,15 +360,11 @@ const SignupPage = () => {
                                             required
                                         >
                                             <option value="">Select your role</option>
-                                            <option value="Doctor">Doctor</option>
-                                            <option value="Patient">Patient</option>
-                                            <option value="Nurse">Nurse</option>
-                                            <option value="Receptionist">Receptionist</option>
-                                            <option value="AI Specialist">AI Specialist</option>
-                                            <option value="Manager">Manager</option>
-                                            <option value="Insurance Coordinator">Insurance Coordinator</option>
-                                            <option value="Lab Technician">Lab Technician</option>
-                                            <option value="Pharmacist">Pharmacist</option>
+                                            {primaryRoles.map(role => (
+                                                <option key={role.roleName} value={role.roleName}>
+                                                    {role.roleName.charAt(0).toUpperCase() + role.roleName.slice(1)}
+                                                </option>
+                                            ))}
                                         </select>
                                         <span className="absolute right-3 top-2 text-gray-400 cursor-pointer">?</span>
                                     </div>
