@@ -26,57 +26,57 @@ let RegisterUser = async (req, res) => {
     // Check if the user already exists
     const existingUser = await User.findOne({ email: req.body.Email });
 
-    
+
 
     if (existingUser) {
       return res.status(400).json({ message: "You already have an account. Please login." });
-    } 
+    }
 
-    const existingRequest = await Request.findOne({ 
-      requestType: 'signup', 
-      'requestData.email': req.body.Email, 
-      status: 'pending' 
+    const existingRequest = await Request.findOne({
+      requestType: 'signup',
+      'requestData.email': req.body.Email,
+      status: 'pending'
     });
     if (existingRequest) {
       return res.status(403).json({ message: "A signup request is already pending for this email." });
     }
 
     if (req.body.Password && req.body.FirstName && req.body.LastName && req.body.Role) {
-    const salt = await bcrypt.genSalt(10);
-    const hashedPass = await bcrypt.hash(req.body.Password, salt);
+      const salt = await bcrypt.genSalt(10);
+      const hashedPass = await bcrypt.hash(req.body.Password, salt);
 
-    const roleFound = await Role.findOne({ 
-      roleName: req.body.Role, 
-      initial: true, 
-      duplicate: false 
-    });
+      const roleFound = await Role.findOne({
+        roleName: req.body.Role,
+        initial: true,
+        duplicate: false
+      });
 
-    if (!roleFound) {
-      return res.status(404).json({ message: `Role "${req.body.Role}" is not available or invalid.` });
-    }
+      if (!roleFound) {
+        return res.status(404).json({ message: `Role "${req.body.Role}" is not available or invalid.` });
+      }
 
-    // Create a new request entry
-    const newRequest = new Request({
-      requestType: 'signup',
-      requestData: {
-        email: req.body.Email,
-        password: hashedPass,
-        name: req.body.FirstName + " " + req.body.LastName,
-        role: req.body.Role,
-        permissions: roleFound.permissions
-      },
+      // Create a new request entry
+      const newRequest = new Request({
+        requestType: 'signup',
+        requestData: {
+          email: req.body.Email,
+          password: hashedPass,
+          name: req.body.FirstName + " " + req.body.LastName,
+          role: req.body.Role,
+          permissions: roleFound.permissions
+        },
         // Pass the role from the request
-      status: 'pending',  
-    });
+        status: 'pending',
+      });
 
-    // Save the request to the database
-    await newRequest.save();
+      // Save the request to the database
+      await newRequest.save();
 
- 
-    res.sendStatus(200);
-  } else {
-    return res.status(200).json({ message: "New user" });
-  }
+
+      res.sendStatus(200);
+    } else {
+      return res.status(200).json({ message: "New user" });
+    }
 
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
@@ -86,15 +86,15 @@ let RegisterUser = async (req, res) => {
 
 let RegisterUserGoogle = async (req, res) => {
   try {
-    const randomPassword = crypto.randomBytes(8).toString('hex'); 
-    const salt = await bcrypt.genSalt(10); 
-    const hashedPass = await bcrypt.hash(randomPassword, salt); 
+    const randomPassword = crypto.randomBytes(8).toString('hex');
+    const salt = await bcrypt.genSalt(10);
+    const hashedPass = await bcrypt.hash(randomPassword, salt);
 
 
-    const roleFound = await Role.findOne({ 
-      roleName: req.body.Role, 
-      initial: true, 
-      duplicate: false 
+    const roleFound = await Role.findOne({
+      roleName: req.body.Role,
+      initial: true,
+      duplicate: false
     });
 
 
@@ -113,17 +113,17 @@ let RegisterUserGoogle = async (req, res) => {
         role: req.body.Role,
         permissions: roleFound.permissions
       },
-        // Pass the role from the request
-      status: 'pending',  
+      // Pass the role from the request
+      status: 'pending',
       googleId: req.body.GoogleId
     });
 
     // Save the request to the database
     await newRequest.save();
 
- 
+
     res.sendStatus(200);
-  
+
 
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
@@ -133,9 +133,9 @@ let RegisterUserGoogle = async (req, res) => {
 
 let VerifyEmail = async (req, res) => {
   try {
-    
+
     const pin = crypto.randomInt(10000, 99999); // Generate a 6-digit PIN
-   
+
     // Set up Nodemailer to send the email
     const transporter = nodemailer.createTransport({
       service: "Gmail",
@@ -202,7 +202,7 @@ let VerifyUserCredentials = async (req, res) => {
         console.error('Error sending email:', error); // Log the specific error
         return res.status(401).json({ message: "Error sending email", error: error.message });
       }
-      res.status(200).json({ message: "PIN sent to your email" , pin: pin});
+      res.status(200).json({ message: "PIN sent to your email", pin: pin });
     });
   } catch (err) {
     console.error(err);
@@ -242,20 +242,20 @@ let LoginUser = async (req, res) => {
 
     if (!user) {
       // If user is not found, return an appropriate response
-      const existingRequest = await Request.findOne({ 
-        requestType: 'signup', 
-        'requestData.email': req.body.Email, 
-        status: 'pending' 
+      const existingRequest = await Request.findOne({
+        requestType: 'signup',
+        'requestData.email': req.body.Email,
+        status: 'pending'
       });
       if (existingRequest) {
         return res.status(403).json({ message: "A signup request is already pending for this email." });
       }
       else {
-      return res.status(400).json("Wrong credentials!");
+        return res.status(400).json("Wrong credentials!");
       }
     }
 
-    
+
 
     const validated = await bcrypt.compare(req.body.Password, user.passwordHash);
 
@@ -266,7 +266,7 @@ let LoginUser = async (req, res) => {
 
     const token = generateToken(user);
 
-    
+
 
     res.status(200).json({
       token,  // JWT token
@@ -289,17 +289,17 @@ let LoginUser = async (req, res) => {
 
 let LoginGoogle = async (req, res) => {
   try {
-    const { email, googleId} = req.body;
+    const { email, googleId } = req.body;
 
     // Check if user already exists
-    const user = await User.findOne({ email: email});
+    const user = await User.findOne({ email: email });
 
     const id = user.googleId;
-    
 
-    if (id){
+
+    if (id) {
       const token = generateToken(user);
-    
+
       res.status(200).json({
         token,  // JWT token
         user: {
@@ -312,15 +312,15 @@ let LoginGoogle = async (req, res) => {
     }
 
   } catch (error) {
-    res.status(500).json({ message: 'Authentication failed'});
+    res.status(500).json({ message: 'Authentication failed' });
   }
 };
 
-let GetUserProfile = async (req,res) =>{
+let GetUserProfile = async (req, res) => {
 
-  const userId = res.locals.userId; 
+  const userId = res.locals.userId;
   const roleIds = res.locals.userrole
-   
+
   try {
     const userProfile = await User.findById(userId);
 
@@ -331,24 +331,30 @@ let GetUserProfile = async (req,res) =>{
 
     const roles = await Role.find({ _id: { $in: roleIds } });
 
-    
-
     if (!roles || roles.length === 0) {
       return res.status(405).json({ message: 'No roles found' });
     }
 
-    const roleNames = roles.map((role) => role.roleName);
-  
+    // Create a map of roles by their ID for quick lookup
+    const roleMap = new Map(roles.map((role) => [role._id.toString(), role]));
+
+    // Reorder roles based on the order of roleIds
+    const sortedRoles = roleIds.map((id) => roleMap.get(id.toString()));
+
+    // Extract role names in the correct order
+    const roleNames = sortedRoles.map((role) => role.roleName);
+
+    
     const memberSince = format(new Date(userProfile.createdAt), 'MMMM dd, yyyy');
 
 
     res.status(200).json({
-    name: userProfile.name,
-    email: userProfile.email,
-    status: userProfile.status,
-    role: roleNames,
-    permissions: roles.flatMap((role) => role.permissions),
-    joined: memberSince
+      name: userProfile.name,
+      email: userProfile.email,
+      status: userProfile.status,
+      role: roleNames,
+      permissions: roles.flatMap((role) => role.permissions),
+      joined: memberSince
 
     });
   } catch (error) {
@@ -445,7 +451,7 @@ const GetAvailablePermissions = async (req, res) => {
 
 
 
-const ProtectedRoute = async (req, res) =>{
+const ProtectedRoute = async (req, res) => {
   const { userId } = req.body; // Expecting userId from the request body
   const decodedUserId = res.locals.userId; // The ID from the decoded token
 
@@ -453,10 +459,10 @@ const ProtectedRoute = async (req, res) =>{
   if (decodedUserId === userId) {
     const user = await User.findById(decodedUserId);
     if (user) {
-      return res.status(200).json({ 
-        message: 'Token is valid', 
-        userId: decodedUserId, 
-        userFullName: res.locals.userFullName 
+      return res.status(200).json({
+        message: 'Token is valid',
+        userId: decodedUserId,
+        userFullName: res.locals.userFullName
       });
     }
     return res.status(404).json('User not found');
@@ -468,7 +474,7 @@ const ProtectedRoute = async (req, res) =>{
 
 
 const GetRequests = async (req, res) => {
-  const userId = res.locals.userId; 
+  const userId = res.locals.userId;
 
 
   try {
@@ -493,7 +499,7 @@ const GetRequests = async (req, res) => {
 
 
 const RoleChange = async (req, res) => {
-  const userId = res.locals.userId; 
+  const userId = res.locals.userId;
   const roleIds = res.locals.userrole
 
   try {
@@ -504,13 +510,13 @@ const RoleChange = async (req, res) => {
     }
 
     const roles = await Role.find({ _id: { $in: roleIds } });
-    
+
     if (roles.length === 0) {
       return res.status(404).json({ message: 'Roles not found' });
     }
 
     const currentRoles = await Role.find({
-      _id: { $in: roleIds }, 
+      _id: { $in: roleIds },
     });
 
     if (currentRoles.length === 0) {
@@ -519,13 +525,13 @@ const RoleChange = async (req, res) => {
 
     // Map the roles to return only the permissions
     const currentPermissions = currentRoles.flatMap((role) => role.permissions);
-    const currentRoleNames = currentRoles.map((role) => role.roleName); 
-    
+    const currentRoleNames = currentRoles.map((role) => role.roleName);
 
-    const newRole = await Role.findOne({ 
-      roleName: req.body.newRole, 
-      initial: true, 
-      duplicate: false 
+
+    const newRole = await Role.findOne({
+      roleName: req.body.newRole,
+      initial: true,
+      duplicate: false
     });
 
     if (!newRole) {
@@ -541,26 +547,26 @@ const RoleChange = async (req, res) => {
         permissions: newRole.permissions,
         currentPermissions: currentPermissions
       },
-        // Pass the role from the request
-      status: 'pending',  
+      // Pass the role from the request
+      status: 'pending',
     });
 
     // Save the request to the database
     await newRequest.save();
 
-    
+
 
     res.status(200).json({ message: 'User profile not found' });
 
   } catch (error) {
-    
+
     res.status(500).json({ message: 'Internal Server Error', error: error.message });
   }
 };
 
 
 const PermissionChange = async (req, res) => {
-  const userId = res.locals.userId; 
+  const userId = res.locals.userId;
   const roleIds = res.locals.userrole
 
   try {
@@ -572,13 +578,13 @@ const PermissionChange = async (req, res) => {
     }
 
     const roles = await Role.find({ _id: { $in: roleIds } });
-    
+
     if (roles.length === 0) {
       return res.status(404).json({ message: 'Roles not found' });
     }
 
     const currentRoles = await Role.find({
-      _id: { $in: roleIds }, 
+      _id: { $in: roleIds },
     });
 
     if (currentRoles.length === 0) {
@@ -587,7 +593,7 @@ const PermissionChange = async (req, res) => {
 
     // Map the roles to return only the permissions
     const currentPermissions = currentRoles.flatMap((role) => role.permissions);
-    const currentRoleNames = currentRoles.map((role) => role.roleName); 
+    const currentRoleNames = currentRoles.map((role) => role.roleName);
 
     const { newPermissions } = req.body;
 
@@ -620,18 +626,19 @@ const PermissionChange = async (req, res) => {
 
 
 
-module.exports = { RegisterUser, 
-  LoginUser, 
+module.exports = {
+  RegisterUser,
+  LoginUser,
   VerifyEmail,
-   RegisterUserGoogle,
-    LoginGoogle, 
-    GetUserProfile, 
-    ProtectedRoute, 
-    GetRequests, 
-    RoleChange, 
-    PermissionChange,
-     VerifyUserCredentials, 
-     UpdateUserPassword,
-     GetAvailableRoles,
-     GetAvailablePermissions,
-    }
+  RegisterUserGoogle,
+  LoginGoogle,
+  GetUserProfile,
+  ProtectedRoute,
+  GetRequests,
+  RoleChange,
+  PermissionChange,
+  VerifyUserCredentials,
+  UpdateUserPassword,
+  GetAvailableRoles,
+  GetAvailablePermissions,
+}

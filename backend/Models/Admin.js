@@ -1,22 +1,45 @@
 const mongoose = require("mongoose");
-const User = require("./User"); // Import the User model
 
 // Define the Admin schema that extends the User schema
 const adminSchema = new mongoose.Schema({
-  permissions: {
-    type: [String],
-    default: [
-      "create_user",
-      "delete_user",
-      "assign_role",
-      "grant_permission",
-      "view_logs"
-    ]
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    match: /.+\@.+\..+/ // Basic email format validation
+  },
+  name: {
+    type: String,
+    required: true
+  },
+  passwordHash: {
+    type: String,
+    required: true
+  },
+  status: {
+    type: String,
+    enum: ["active", "inactive", "suspended"],
+    required: true
+  },
+  role: [{
+    type: String,
+    required: true
+  }],
+  googleId: { 
+    type: String, 
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+    required: true
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+    required: true
   }
 });
 
-// Inherit User schema properties
-adminSchema.add(User.schema);
 
 // Create an Admin model
 const Admin = mongoose.model("Admin", adminSchema);
