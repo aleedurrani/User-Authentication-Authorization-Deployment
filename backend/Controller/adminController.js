@@ -1,234 +1,231 @@
+const Role = require('../Models/Role')
+const User = require('../Models/User')
 const Request = require('../Models/Request');
-const User = require('../Models/User');
-const Role = require('../Models/Role');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 
-const getAdminRequests = async (req, res) => {
-    try {
-        const pendingRequests = await Request.find({ requestType: 'signup', status: 'pending' });
-        res.status(200).json(pendingRequests);
-    } catch (error) {
-        console.error('Error fetching signup requests:', error);
-        res.status(500).json({ message: 'Internal Server Error' });
-    }
-};
 
-const approveRequest = async (req, res) => {
-    const requestId = req.params.id;
-
-    try {
-        const request = await Request.findById(requestId);
-
-        if (!request || request.status !== 'pending') {
-            return res.status(404).json({ message: 'Signup request not found or already processed.' });
-        }
-
-        const { email, password, name, role } = request.requestData;
-
-        const roleData = await Role.findOne({ roleName: role });
-        if (!roleData) {
-            return res.status(400).json({ message: 'Requested role does not exist.' });
-        }
-
-        const userData = {
-            email,
-            name,
-            passwordHash: password,
-            role,
-            permissions: roleData.permissions,
-            status: 'active',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        };
-
-        let newUser;
-        if (role === 'Admin') {
-            newUser = new Admin(userData);
-        } else {
-            newUser = new User(userData);
-        }
-
-        await newUser.save();
-
-        request.status = 'approved';
-        await request.save();
-
-        res.status(200).json({ message: 'Signup request approved and user created successfully.' });
-    } catch (error) {
-        console.error('Error approving signup request:', error);
-        res.status(500).json({ message: 'Internal Server Error' });
-    }
-};
-
-const rejectRequest = async (req, res) => {
-    const requestId = req.params.id;
-
-    try {
-        const request = await Request.findById(requestId);
-
-        if (!request || request.status !== 'pending') {
-            return res.status(404).json({ message: 'Signup request not found or already processed.' });
-        }
-
-        request.status = 'rejected';
-        await request.save();
-
-        res.status(200).json({ message: 'Signup request has been rejected.' });
-    } catch (error) {
-        console.error('Error rejecting signup request:', error);
-        res.status(500).json({ message: 'Internal Server Error' });
-    }
-};
-
-const verifyAdmin = async (req, res) => {
+let GetAllRequests = async (req, res) => {
   try {
-    const userId = res.locals.userId; 
+    const requests = await Request.find()
 
-    const user = await User.findById(userId);
-    if (user && user.role === 'Admin') {
-      res.status(200).json({ isAdmin: true });
-    } else {
-      res.status(200).json({ isAdmin: false });
-    }
+
+    res.status(200).json({
+      requests
+    });
   } catch (error) {
-    console.error('Error verifying admin:', error);
-    res.status(500).json({ message: 'Internal Server Error' });
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching requests',
+      error: error.message
+    });
   }
 };
 
-const getAllRoles = async (req, res) => {
-    try {
-      const roles = await Role.find({});
-      res.status(200).json(roles);
-    } catch (error) {
-      console.error('Error fetching roles:', error);
-      res.status(500).json({ message: 'Internal Server Error' });
-    }
-};
-  
-const searchUserByEmail = async (req, res) => {
-    const { email } = req.query;
-    if (!email) {
-      return res.status(400).json({ message: 'Email query parameter is required.' });
-    }
-  
-    try {
-      const user = await User.findOne({ email }).select('-passwordHash');
-      if (!user) {
-        return res.status(404).json({ message: 'User not found.' });
-      }
-      res.status(200).json(user);
-    } catch (error) {
-      console.error('Error searching user by email:', error);
-      res.status(500).json({ message: 'Internal Server Error' });
-    }
+
+const nodemailer = require("nodemailer");
+
+const sendEmail = async ({ to, subject, text }) => {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      auth: {
+        user: process.env.EMAIL,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL,
+      to,
+      subject,
+      text,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+  } catch (error) {
+    throw new Error("Email sending failed.");
+  }
 };
 
-const getUserDetails = async (req, res) => {
-    const { id } = req.params;
-  
-    try {
-      const user = await User.findById(id).select('-passwordHash');
-      if (!user) {
-        return res.status(404).json({ message: 'User not found.' });
-      }
-      res.status(200).json(user);
-    } catch (error) {
-      console.error('Error fetching user details:', error);
-      res.status(500).json({ message: 'Internal Server Error' });
-    }
-};
+let ProcessRequest = async (req, res) => {
+  try {
+    const { requestId, action } = req.body;
 
-const updateUserPermissions = async (req, res) => {
-    const { id } = req.params;
-    const { permissions } = req.body;
-  
-    if (!Array.isArray(permissions)) {
-      return res.status(400).json({ message: 'Permissions should be an array of strings.' });
-    }
-  
-    try {
-      const user = await User.findById(id);
-      if (!user) {
-        return res.status(404).json({ message: 'User not found.' });
-      }
-  
-      user.permissions = permissions;
-      user.updatedAt = new Date();
-      await user.save();
-  
-      res.status(200).json({ message: 'User permissions updated successfully.' });
-    } catch (error) {
-      console.error('Error updating user permissions:', error);
-      res.status(500).json({ message: 'Internal Server Error' });
-    }
-};
+    // Fetch the request by ID
+    const request = await Request.findById(requestId);
 
-const updateUserRoleAndStatus = async (req, res) => {
-    const { id } = req.params;
-    const { role, status } = req.body;
-  
-    if (!role && !status) {
-      return res.status(400).json({ message: 'At least one of role or status must be provided.' });
+    if (!request) {
+      return res.status(404).json({ message: "Request not found." });
     }
-  
-    try {
-      const user = await User.findById(id);
-      if (!user) {
-        return res.status(404).json({ message: 'User not found.' });
-      }
-  
-      if (role) {
-        const roleData = await Role.findOne({ roleName: role });
-        if (!roleData) {
-          return res.status(400).json({ message: 'Provided role does not exist.' });
-        }
-        user.role = role;
-        user.permissions = roleData.permissions;
-      }
-  
-      if (status) {
-        if (!['active', 'inactive', 'suspended'].includes(status)) {
-          return res.status(400).json({ message: 'Invalid status value.' });
-        }
-        user.status = status;
-      }
-  
-      user.updatedAt = new Date();
-      await user.save();
-  
-      res.status(200).json({ message: 'User role and/or status updated successfully.' });
-    } catch (error) {
-      console.error('Error updating user role/status:', error);
-      res.status(500).json({ message: 'Internal Server Error' });
-    }
-};
 
-const getAllPermissions = async (req, res) => {
-    try {
-      const roles = await Role.find({});
-      const permissionsSet = new Set();
-      roles.forEach(role => {
-        role.permissions.forEach(permission => permissionsSet.add(permission));
+    if (action === "approved" && request.requestType === "signup") {
+      // Handle signup approval (same as your current code)
+      const role = await Role.findOne({ roleName: request.requestData.role, initial: true, duplicate: false });
+
+      if (!role) {
+        return res.status(404).json({ message: `Role "${request.requestData.role}" not found or invalid.` });
+      }
+
+      const newUser = new User({
+        email: request.requestData.email,
+        name: request.requestData.name,
+        passwordHash: request.requestData.password,
+        role: [role._id.toString()],
+        status: "active",
+        googleId: request.googleId || "",
       });
-      const allPermissions = Array.from(permissionsSet);
-      res.status(200).json(allPermissions);
-    } catch (error) {
-      console.error('Error fetching all permissions:', error);
-      res.status(500).json({ message: 'Internal Server Error' });
+
+      await newUser.save();
+      request.status = "approved";
+      await request.save();
+
+      await sendEmail({
+        to: request.requestData.email,
+        subject: "Signup Request Approved",
+        text: `Dear ${request.requestData.name},\n\nYour signup request has been approved. You can now log in to your account.\n\nThank you!`,
+      });
+
+      return res.status(200).json({ message: "Signup request approved, and user created." });
+    } else if (action === "rejected" && request.requestType === "signup") {
+      // Handle signup rejection
+      request.status = "rejected";
+      await request.save();
+
+      await sendEmail({
+        to: request.requestData.email,
+        subject: "Signup Request Rejected",
+        text: `Dear ${request.requestData.name},\n\nWe regret to inform you that your signup request has been rejected.\n\nIf you have any questions, please contact support.\n\nThank you!`,
+      });
+
+      return res.status(200).json({ message: "Signup request rejected." });
+    } else if (request.requestType === "role change") {
+      // Handle role change request
+      const newRole = request.requestData.newRole;
+
+      // Find the role
+      const role = await Role.findOne({ roleName: request.requestData.newRole, initial: true, duplicate: false });
+
+      if (!role) {
+        return res.status(404).json({ message: `Role "${newRole}" not found.` });
+      }
+
+      // Fetch the user to update their roles
+      const user = await User.findOne({ email: request.requestData.email });
+
+      if (!user) {
+        return res.status(404).json({ message: `User with email "${request.requestData.email}" not found.` });
+      }
+
+      if (action === "approved") {
+        // Add the role to the user's roles array
+        if (!user.role.includes(role._id.toString())) {
+          user.role.push(role._id.toString());
+        }
+
+        await user.save();
+        request.status = "approved";
+        await request.save();
+
+        // Send approval email
+        await sendEmail({
+          to: request.requestData.email,
+          subject: "Role Change Request Approved",
+          text: `Dear ${user.name},\n\nYour request to add the "${newRole}" role has been approved. You now have additional permissions associated with this role. Please login again to avail those permissions.\n\nThank you!`,
+        });
+
+        return res.status(200).json({ message: "Role change request approved, and user updated." });
+      } else if (action === "rejected") {
+        // Update the request status to rejected
+        request.status = "rejected";
+        await request.save();
+
+        // Send rejection email
+        await sendEmail({
+          to: request.requestData.email,
+          subject: "Role Change Request Rejected",
+          text: `Dear ${user.name},\n\nYour request to add the "${newRole}" role has been rejected.\n\nIf you have any questions, please contact support.\n\nThank you!`,
+        });
+
+        return res.status(200).json({ message: "Role change request rejected." });
+      }
+    } else if (request.requestType === "permission change") {
+      // Handle permission change request
+      const newPermissions = request.requestData.permissions;
+
+      // Find the user
+      const user = await User.findOne({ email: request.requestData.email });
+
+      if (!user) {
+        return res.status(404).json({ message: `User with email "${request.requestData.email}" not found.` });
+      }
+
+      // Fetch the primary role
+      const primaryRoleId = user.role[0];
+      const primaryRole = await Role.findById(primaryRoleId);
+
+      if (!primaryRole) {
+        return res.status(404).json({ message: "Primary role not found." });
+      }
+
+      if (action === "approved") {
+        if (primaryRole.initial) {
+          // Create a new role based on the primary role
+          const newRole = new Role({
+            roleName: `${primaryRole.roleName}`,
+            permissions: [...primaryRole.permissions, ...newPermissions], // Add new permissions
+            initial: false, // Set initial to false for the new role
+            duplicate: true,
+          });
+
+          await newRole.save();
+
+          // Update user's role array: replace primary role with the new role
+          user.role[0] = newRole._id.toString();
+        } else {
+          // Update the permissions of the existing role
+          primaryRole.permissions = [...new Set([...primaryRole.permissions, ...newPermissions])]; // Avoid duplicates
+          await primaryRole.save();
+        }
+
+        await user.save();
+        request.status = "approved";
+        await request.save();
+
+        // Send approval email
+        await sendEmail({
+          to: request.requestData.email,
+          subject: "Permission Change Request Approved",
+          text: `Dear ${user.name},\n\nYour request to update permissions has been approved. The following permissions have been added: ${newPermissions.join(', ')}.\n\nPlease login again to avail these permissions.\n\nThank you!`,
+        });
+
+        return res.status(200).json({ message: "Permission change request approved, and user updated." });
+      } else if (action === "rejected") {
+        // Update the request status to rejected
+        request.status = "rejected";
+        await request.save();
+
+        // Send rejection email
+        await sendEmail({
+          to: request.requestData.email,
+          subject: "Permission Change Request Rejected",
+          text: `Dear ${user.name},\n\nYour request to update permissions has been rejected. The following permissions were requested: ${newPermissions.join(', ')}.\n\n If you have any questions, please contact support.\n\nThank you!`,
+        });
+
+        return res.status(200).json({ message: "Permission change request rejected." });
+      }
     }
+
+    res.status(400).json({ message: "Invalid action or request type." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error", error: err.message });
+  }
 };
+
+
 
 module.exports = {
-    getAdminRequests,
-    approveRequest,
-    rejectRequest,
-    verifyAdmin,
-    getAllRoles,
-    searchUserByEmail,
-    getUserDetails,
-    updateUserPermissions,
-    updateUserRoleAndStatus,
-    getAllPermissions
-};
+  GetAllRequests,
+  ProcessRequest,
+}
