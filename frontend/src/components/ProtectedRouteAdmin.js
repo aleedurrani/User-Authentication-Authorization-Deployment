@@ -18,7 +18,7 @@ const ProtectedRoute = ({ element: Component, ...rest }) => {
 
       try {
         // Call your backend to verify the token along with userId and userFullName
-        const response = await fetch('http://localhost:3001/auth/protectedRoute', {
+        const response = await fetch('http://localhost:3001/admin/protectedRouteAdmin', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
